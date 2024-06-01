@@ -13,12 +13,16 @@ In this below I mentioned some OOP concepts with some examples. Inside the proje
 # Inheritance:
 Inheritance is a mechanism where a new class (subclass or derived class) is created by inheriting properties and behaviours from an existing class (superclass or base class). This allows for code reusability and the creation of hierarchies of classes. For example, "Game_Rule120" class inherits from "game_rule"
 
-abstract class game_rule {}
-public class Game_Rule120 extends game_rule {}
-abstract class experience {}
-public class player_experience extends experience {}
-interface Beginning {}
-public class Welcome_to implements Beginning {}
+abstract class game_rule {
+        ...
+}
+
+public class Game_Rule120 extends game_rule {
+abstract class experience {...}
+public class player_experience extends experience {...}
+interface Beginning {...}
+public class Welcome_to implements Beginning {...}
+}
 
 
 # Information Hiding and Encapsulation:
