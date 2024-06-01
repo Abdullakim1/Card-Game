@@ -57,12 +57,156 @@ The Inclusion polymorphism allows to point derived classes using base class poin
 
 In this section I provided three different example of usage of polymorphism by inclusion.
 
-These codes below that I've provided shows this concept with Game Rules(game_rule) and the  gen_rule, rule_one methods: The getInformation method shows the information of the specific class that is overridden inside, and the celestialBodyAtmosphere will implement information about the atmosphere and temperature of those classes. Finally, the calculateTimeDilation method represent the Einstein's theory of general relativity which is due to gravity of every specific celestial body types.
+These codes below that I've provided shows this concept with Beginning interface and the  usage, rule, welcome methods: The methods shows the information of the specific classes that is overridden inside, and the information will be implemented.
 
 ## 1. Base Class and Abstract Methods:
 
-game_rule is the base class with abstract methods gen_rule, rule_one.
+Beginning is the base interface with public methods usage, rule, welcome.
 
-abstract class game_rule {
-    abstract String gen_rule();
-    abstract String rule_one();
+interface Beginning {
+    public String usage();
+    public String  rule();
+    public String welcome();
+    }
+
+## 2. Derived Classes: override1:
+override1 is derived class that inherit from override. It will override the over method, providing its own specific implementations.
+
+// Derived class override1
+class override1 extends override{
+    //code...
+    @Override
+    public String over(){
+    //implementation of this method
+}
+}
+
+## 3. The class that determines winning chance
+The prob_win_player1 method calculates player's chance of winning for each player. The winner's probability calculated inside showProb method in main class(GameLauncherGUI).
+
+The prob_win_player1 method is responsible for calculating and returning random winning chance probability, wether player1 or 2 or 3, based on the random distribution logic.
+
+public class prob_win_player1 {
+    public String prob_win_player1(List<String> player1Hand) {
+    //code...
+    StringBuilder result = new StringBuilder();
+        result.append("Probability for Player 1: \n\n");
+
+        boolean hasBlackCard = player1Hand.contains("Black");
+        if (hasBlackCard) {
+            result.append("Winning chance is low\n");
+        } else {
+            int high = 0;
+            int avg = 0;
+            int low = 0;
+            ...
+            }
+}
+}
+
+## Abstraction: 
+The class gameSystem abstracts away the details of the game implementation from the user. Users only need to call the start method to begin the game, while the internal workings, such as dealing hands, player turns, and determining the winner/loser, are abstracted away within the class.
+
+public class gameSystem {
+    private List<String> player1Hand;
+    private List<String> player2Hand;
+    private List<String> player3Hand;
+    private Timer playerTimer;
+    private final long TIME_LIMIT = 10000;
+
+    public void start(){...};
+
+## Composition:
+In Java, the concept of composition is a way of designing and structuring classes so that they can be composed of one another, where one class contains an instance of another class as a member variable.
+
+In the GameLauncherGUI class:
+
+It has instance variables game, PlayerExperience, and player_ok of types gameSystem, player_experience, and Players, respectively.
+These instance variables represent parts of the GameLauncherGUI class, and they are used to provide specific functionalities to the GUI.
+For example, game is used to start the game, PlayerExperience is used to manage player experiences, and player_ok is used to handle player names and ages.
+The GameLauncherGUI class utilizes these instances to compose its functionality.
+
+GameLauncherGUI class exhibits composition by composing its functionality using other classes.
+
+public class GameLauncherGUI extends JFrame {
+    private gameSystem game; // Composition: GameLauncherGUI has a gameSystem
+    private player_experience PlayerExperience; // Composition: GameLauncherGUI has a player_experience
+    private Players player_ok; // Composition: GameLauncherGUI has a Players
+
+    // Other code...
+}
+
+## Subtyping:
+
+Subtyping in Java is a fundamental concept related to the inheritance hierarchy and type compatibility between classes and interfaces. Subtyping allows a subclass to be treated as an instance of its superclass or as an instance that implements an interface. This is crucial for polymorphism and method overriding.
+
+Abstract Class: The experience class is an abstract class with abstract methods experience_of() and general(). Abstract classes cannot be instantiated directly; they provide a blueprint for subclasses to implement their own functionality.
+
+Subclassing: The player_experience class extends the experience abstract class. By doing so, player_experience becomes a subtype of experience. It inherits the abstract methods experience_of() and general(), which it must implement.
+
+Implementation of Abstract Methods: The player_experience class provides implementations for the abstract methods experience_of() and general(), fulfilling the contract specified by the experience abstract class.
+
+Polymorphism: Through inheritance and method overriding, instances of player_experience can be treated as instances of experience. This allows for polymorphic behavior, where code written to operate on experience objects can work with player_experience objects as well.
+
+Superclass: experience
+Subclass: player_experience
+Subtyping: player_experience is a subtype of experience, inheriting its methods and possibly extending its functionality.
+
+abstract class experience {
+    abstract void experience_of();
+    abstract String general();
+}
+
+public class player_experience extends experience {
+    protected String general() {...}
+
+    protected void experience_of() {
+        // Implementation
+    }
+}
+
+## Interface Implementation:
+An interface defines a contract of behaviours that a class must implement. In simpler terms, it specifies a set of methods (and constants) that a class must provide, but it doesn't provide the implementation details. Interfaces are often used for creating common, shareable contracts that can be used by multiple classes.
+
+interface Beginning{
+    public String usage();
+public class Welcome_to implements Beginning {
+
+    public String usage() {...}
+
+## Exception handling:
+Exception handling in Java is a mechanism for dealing with unexpected or erroneous situations that may occur during program execution.
+Exception handling is typically done using try and catch blocks. You enclose the code that might throw an exception within the try block and catch and handle the exception within the catch block.
+
+protected void experience_of() {
+        try {
+        //code...
+        if (gaming_experience < 5) {
+                JOptionPane.showMessageDialog(null, "Unfortunately your experience is insufficient");
+                System.exit(0);
+            } else if (gaming_experience == 5 || gaming_experience > 5) {
+
+            }
+            //Player 2
+
+            if (gaming_experience2 < 5) {
+                JOptionPane.showMessageDialog(null, "Unfortunately your experience is insufficient");
+                System.exit(0);
+
+            } else if (gaming_experience2 == 5 || gaming_experience2 > 5) {
+
+            }
+            //player 3
+
+            if (gaming_experience3 < 5) {
+                JOptionPane.showMessageDialog(null, "Unfortunately your experience is insufficient");
+                System.exit(0);
+            } else if (gaming_experience3 == 5 || gaming_experience3 > 5) {
+
+            }
+        } catch (NumberFormatException e) {
+        //code...
+        }
+    }
+
+    
