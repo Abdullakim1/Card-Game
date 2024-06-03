@@ -57,21 +57,35 @@ public void setAge(int age) {this.age = age;}
 
 # Polymorphism by Inclusion:
 
-The Inclusion polymorphism allows to point derived classes using base class pointers and references. This is runtime polymorphism and we do not know type of the actual object until it is executing.
+The Inclusion polymorphism allows to point derived classes using base class pointers and references. This is runtime polymorphism and we do not know type of the actual object until it is executing. Polymorphism by inclusion, where objects of different classes can be treated uniformly if they implement the same interface, providing flexibility and modularity in the design of the system.
 
-In this section I provided three different example of usage of polymorphism by inclusion.
+The code bellow depicts example of usage of polymorphism by inclusion.
 
-These codes below that I've provided shows this concept with Beginning interface and the  usage, rule, welcome methods: The methods shows the information of the specific classes that is overridden inside, and the information will be implemented.
+The code that I've provided shows this concept with Beginning interface and the  welcome method. Since Welcome_to, usage and usage2 all implement the Beginning interface, they can be treated uniformly by the welcome() method.
 
 ## 1. Base Class and Abstract Methods:
 
-Beginning is the base interface with public methods usage, rule, welcome.
+Beginning is the base interface with public method welcome.
 
-interface Beginning {
-    public String usage();
-    public String  rule();
+interface Beginning{
     public String welcome();
+}
+
+public class Welcome_to implements Beginning {
+
+    public String welcome() {
     }
+}
+class usage implements Beginning {
+
+    public String welcome() {
+    }
+}
+class usage2 implements Beginning{
+
+    public String welcome() {
+    }
+}
 
 ## 2. Derived Classes: override1:
 override1 is derived class that inherit from override. It will override the over method, providing its own specific implementations.
