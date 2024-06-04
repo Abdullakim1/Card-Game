@@ -123,7 +123,7 @@ public class prob_win_player1 {
 }
 
 ## Abstraction: 
-The class experience abstracts away the details of the player_experience from the user. Users only need to call the start method to begin the game, while the internal workings, such as dealing hands, player turns, and determining the winner/loser, are abstracted away within the class.
+Abstraction in programming is a concept that involves hiding the complex implementation details and showing only the essential features of an object. In the provided code, abstraction is highlighted through the use of an abstract class and the abstract methods it defines. The experience class is declared as an abstract class. This means it cannot be instantiated directly and must be subclassed. It contains two abstract methods, experience_of() and general(), which must be implemented by any subclass. This design enforces a contract that any subclass must provide specific implementations for these methods, while the details of these methods are not exposed in the experience class itself.
 
 abstract class experience {
     abstract void experience_of();
