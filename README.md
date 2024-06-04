@@ -125,14 +125,19 @@ public class prob_win_player1 {
 ## Abstraction: 
 The class gameSystem abstracts away the details of the game implementation from the user. Users only need to call the start method to begin the game, while the internal workings, such as dealing hands, player turns, and determining the winner/loser, are abstracted away within the class.
 
-public class gameSystem {
-    private List<String> player1Hand;
-    private List<String> player2Hand;
-    private List<String> player3Hand;
-    private Timer playerTimer;
-    private final long TIME_LIMIT = 10000;
+abstract class experience {
+    abstract void experience_of();
+    abstract String general();
+}
+public class player_experience extends experience {
+    protected String general() {
+        ...
+    }
 
-    public void start(){...};
+    protected void experience_of() {
+    ...
+    }
+}
 
 ## Composition:
 In Java, the concept of composition is a way of designing and structuring classes so that they can be composed of one another, where one class contains an instance of another class as a member variable.
