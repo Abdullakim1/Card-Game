@@ -123,7 +123,7 @@ public class prob_win_player1 {
 }
 
 ## Abstraction: 
-The class gameSystem abstracts away the details of the game implementation from the user. Users only need to call the start method to begin the game, while the internal workings, such as dealing hands, player turns, and determining the winner/loser, are abstracted away within the class.
+The class experience abstracts away the details of the player_experience from the user. Users only need to call the start method to begin the game, while the internal workings, such as dealing hands, player turns, and determining the winner/loser, are abstracted away within the class.
 
 abstract class experience {
     abstract void experience_of();
