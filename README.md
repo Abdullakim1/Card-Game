@@ -122,6 +122,35 @@ public class prob_win_player1 {
 }
 }
 
+## Method overloading
+
+This is seen in having two methods with the same name calculateWinProbability, but different parameter lists. One takes a List<T> and the other takes a String[]. This allows the class to calculate win probabilities using either a list or an array of strings as input. Method overloading allows to define multiple methods with the same name but different parameter lists. This provides flexibility and readability of the code. Java determines which method to execute based on the number and types of arguments provided in the method call. Overloading is determined at compile time and is based on the method signature (name and parameter types).
+
+public String calculateWinProbability(List<T> playerHand) {
+    // Method implementation
+}
+
+public String calculateWinProbability(String[] playerHand) {
+    // Overloaded method implementation
+}
+
+## Parametric polymorphism
+
+Parametric polymorphism allows to write code that can operate on a wide range of data types. In the provided code, the class prob_win_player3 is using generics <T> to achieve parametric polymorphism.
+
+The method calculateWinProbability() is declared with a parameter of type List<T>, where T is a placeholder for a generic type. This means that the method can accept a list of any type. Inside the method, it operates on elements of type T without knowing the specific type until runtime.
+
+public class prob_win_player3<T> { // <---- Generics declared here
+
+    public String calculateWinProbability(List<T> playerHand) { // <---- List<T> is a generic type
+        StringBuilder result = new StringBuilder();
+        result.append("Probability for Player3: \n\n");
+
+        // Code operates on elements of type T without knowing the specific type until runtime
+
+    }
+}
+
 ## Abstraction: 
 Abstraction in programming is a concept that involves hiding the complex implementation details and showing only the essential features of an object. In the provided code, abstraction is highlighted through the use of an abstract class and the abstract methods it defines. The experience class is declared as an abstract class. This means it cannot be instantiated directly and must be subclassed. It contains two abstract methods, experience_of() and general(), which must be implemented by any subclass. This design enforces a contract that any subclass must provide specific implementations for these methods, while the details of these methods are not exposed in the experience class itself.
 
