@@ -20,10 +20,6 @@ abstract class game_rule {
 public class Game_Rule120 extends game_rule {
 abstract class experience {...}
 public class player_experience extends experience {...}
-interface Beginning {...}
-public class Welcome_to implements Beginning {...}
-}
-
 
 # Information Hiding and Encapsulation:
 Encapsulation and information hiding are two related but distinct concepts in object-oriented programming. Encapsulation is the bundling of data (attributes) and the methods (functions) that operate on that data into a single unit (a class), while information hiding is the principle of restricting access to certain details of an object.
