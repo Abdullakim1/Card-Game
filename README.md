@@ -1,10 +1,9 @@
 # Game System Card
 
 # Introduction
-The project illustrates card game, where there are 10 cards: red, white, blue each 3 cards and 1 black card. The player who gets black card will lose, however the player can keep playing or terminate the game by putting black card, it is up to player. Moreover for each player 10 seconds has given, if the player won't do anything during this time player will lose and game will end. There is 3 players who play the game and 10 cards each player gets 3 cards, shuffle and distribution algorithm in gameSystem class makes sure that every player gets only 3 cards by random distribution. For this game GUI interface I used Swing Java built in library to make user friendly interface. Player experience, personal information, probability of each player is also included for statistical purposes.
+The project illustrates card game, where there are 10 cards: red, white, blue each 3 cards and 1 black card. The player who gets black card will lose, however the player can keep playing or terminate the game by putting black card, it is up to player. Player experience class makes sure if player doesn't have sufficient experience it won't allow to play the game for all players. There is 3 players who play the game and 10 cards each player gets 3 cards, shuffle and distribution algorithm in gameSystem class makes sure that every player gets only 3 cards by random distribution. For this game GUI interface I used Swing Java built in library to make user friendly interface. Player experience, personal information, probability of each player is also included for statistical purposes.
 
-Welcome message class and Override method were added in addition to player panel.
-The code follows hierarchical architecture. The main class is GameLauncherGUI, every class is connected and coordinated with this class.
+The code follows hierarchical architecture. The main class is GameLauncherGUI, Game system is superclass for experience class every class is connected and coordinated with GameLauncherGUI class.
 
 
 # OOP Concepts in more Detail with Code Snippets
