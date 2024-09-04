@@ -104,29 +104,6 @@ class override1 extends override{
 }
 }
 
-## 3. The class that determines winning chance
-The prob_win_player1 method calculates player's chance of winning for each player. The winner's probability calculated inside showProb method in main class(GameLauncherGUI).
-
-The prob_win_player1 method is responsible for calculating and returning random winning chance probability, wether player1 or 2 or 3, based on the random distribution logic.
-
-public class prob_win_player1 {
-    public String prob_win_player1(List<String> player1Hand) {
-    //code...
-    StringBuilder result = new StringBuilder();
-        result.append("Probability for Player 1: \n\n");
-
-        boolean hasBlackCard = player1Hand.contains("Black");
-        if (hasBlackCard) {
-            result.append("Winning chance is low\n");
-        } else {
-            int high = 0;
-            int avg = 0;
-            int low = 0;
-            ...
-            }
-}
-}
-
 ## Method overloading
 
 This is seen in having two methods with the same name calculateWinProbability, but different parameter lists. One takes a List<T> and the other takes a String[]. This allows the class to calculate win probabilities using either a list or an array of strings as input. Method overloading allows to define multiple methods with the same name but different parameter lists. This provides flexibility and readability of the code. Java determines which method to execute based on the number and types of arguments provided in the method call. Overloading is determined at compile time and is based on the method signature (name and parameter types).
