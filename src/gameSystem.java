@@ -25,7 +25,7 @@ public class gameSystem<T extends Player> {
         // Each player gets 3 cards
         int totalCards = 3 * playerCount;
 
-        // Create a list with the required number of colors, including exactly one "Black" card
+        // Creates a list with the required number of colors, including exactly one "Black" card
         List<String> colors = new ArrayList<>();
         colors.add("Black"); // Exactly one "Black" card
         for (int i = 0; i < totalCards - 1; i++) {
@@ -54,15 +54,15 @@ public class gameSystem<T extends Player> {
     public void prepareNewRound() {
         firstChosenColor = null;
 
-        // Create a list of colors for the round
+        // Creates a list of colors for the round
         List<String> colorList = new ArrayList<>(Arrays.asList(baseColors));
         Collections.shuffle(colorList);
 
-        // Ensure each player gets 3 cards
+        // Ensures each player gets 3 cards
         int cardsPerPlayer = 3;
         List<String> allColors = new ArrayList<>();
 
-        // Add exactly one "Black" card
+        // Adds exactly one "Black" card
         allColors.add("Black");
         for (int i = 0; i < 3 * players.size() - 1; i++) {
             allColors.add(colorList.get(i % colorList.size()));
