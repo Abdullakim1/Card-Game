@@ -1,10 +1,17 @@
 # Game System Card
 
 # Introduction
-The project illustrates card game, where there are 10 cards: red, white, blue each 3 cards and 1 black card. The player who gets black card will lose, however the player can keep playing or terminate the game by putting black card, it is up to player. Player experience class makes sure if player doesn't have sufficient experience it won't allow to play the game for all players. There is 3 players who play the game and 10 cards each player gets 3 cards, shuffle and distribution algorithm in gameSystem class makes sure that every player gets only 3 cards by random distribution. For this game GUI interface I used Swing Java built in library to make user friendly interface. Player experience, personal information, probability of each player is also included for statistical purposes.
+The project illustrates card game, where there are cards: red, white, blue each 3 cards and 1 black card. The player who gets black card will lose, however the player can keep playing or terminate the game by putting black card, it is up to player. Player experience class makes sure if player doesn't have sufficient experience it won't allow to play the game for all players. Players receive 3 cards each, shuffled and distributed randomly.
 
-The code follows hierarchical architecture. The main class is GameLauncherGUI, Game system is superclass for experience class every class is connected and coordinated with GameLauncherGUI class.
+The players can be any number from 1 to infinity, each player gets 3 cards. The game is implemented using Java's Swing library for a user-friendly graphical interface. The project also includes functionality for player experience, player name.
 
+# Project Structure
+The project uses a hierarchical architecture with the following key classes:
+
+1. GameLauncherGUI: The main class that initiates the game and interacts with other components.
+2. gameSystem: Superclass for game management.
+3. PlayerExperience: Handles player experience validation.
+4. Players: Manages player information and card distribution.
 
 # OOP Concepts in more Detail with Code Snippets
 In this below I mentioned some OOP concepts with some examples. Inside the project is used way more OOP concepts then here in the report.
@@ -12,13 +19,10 @@ In this below I mentioned some OOP concepts with some examples. Inside the proje
 # Inheritance:
 Inheritance is a mechanism where a new class (subclass or derived class) is created by inheriting properties and behaviours from an existing class (superclass or base class). This allows for code reusability and the creation of hierarchies of classes. For example, "Game_Rule120" class inherits from "game_rule"
 
-abstract class game_rule {
-        ...
-}
+abstract class game_rule { ... }
 
-public class Game_Rule120 extends game_rule {
-abstract class experience {...}
-public class player_experience extends experience {...}
+public class Game_Rule120 extends game_rule { ... }
+
 
 # Information Hiding and Encapsulation:
 Encapsulation and information hiding are two related but distinct concepts in object-oriented programming. Encapsulation is the bundling of data (attributes) and the methods (functions) that operate on that data into a single unit (a class), while information hiding is the principle of restricting access to certain details of an object.
@@ -28,15 +32,15 @@ Here in the code below the attributes of the class are declared as protected and
 And we encapsulated these data (attributes) by the getter and setter method. it means that the other classes can access to these data via these methods.
 
 public class Players {
-    private String name, name2, name3;   //Information hiding.
-    private int age, age2, age3;
+    private String name;
+    private int age;
 
-    //Constructor...
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public int getAge() { return age; }
+    public void setAge(int age) { this.age = age; }
+}
 
-public String getName() {return name;}
-public void setName(String name1) {this.name = name;}
-public int getAge() {return age;}
-public void setAge(int age) {this.age = age;} 
 
 # Polymorphism:
 Polymorphism allows objects of different classes to be treated as objects of a common superclass. It enables flexibility and extensibility in your code. some common forms of polymorphism are:
@@ -56,7 +60,13 @@ The Inclusion polymorphism allows to point derived classes using base class poin
 
 The code bellow depicts example of usage of polymorphism by inclusion.
 
-The code that I've provided shows this concept with Beginning interface and the  welcome method. Since Welcome_to, usage and usage2 all implement the Beginning interface, they can be treated uniformly by the welcome() method.
+interface Beginning {
+    String welcome();
+}
+
+public class Welcome_to implements Beginning {
+    public String welcome() { ... }
+}
 
 ## 1. Base Class and Abstract Methods:
 
@@ -153,14 +163,10 @@ abstract class experience {
     abstract void experience_of();
     abstract String general();
 }
-public class player_experience extends experience {
-    protected String general() {
-        ...
-    }
 
-    protected void experience_of() {
-    ...
-    }
+public class player_experience extends experience {
+    protected String general() { ... }
+    protected void experience_of() { ... }
 }
 
 ## Composition:
@@ -176,12 +182,13 @@ The GameLauncherGUI class utilizes these instances to compose its functionality.
 GameLauncherGUI class exhibits composition by composing its functionality using other classes.
 
 public class GameLauncherGUI extends JFrame {
-    private gameSystem game; // Composition: GameLauncherGUI has a gameSystem
-    private player_experience PlayerExperience; // Composition: GameLauncherGUI has a player_experience
-    private Players player_ok; // Composition: GameLauncherGUI has a Players
+    private gameSystem game;
+    private player_experience PlayerExperience;
+    private Players player_ok;
 
-    // Other code...
+    // Constructor and methods
 }
+
 
 ## Subtyping:
 
@@ -205,55 +212,31 @@ abstract class experience {
 }
 
 public class player_experience extends experience {
-    protected String general() {...}
-
-    protected void experience_of() {
-        // Implementation
-    }
+    protected String general() { ... }
+    protected void experience_of() { ... }
 }
+
 
 ## Interface Implementation:
 An interface defines a contract of behaviours that a class must implement. In simpler terms, it specifies a set of methods (and constants) that a class must provide, but it doesn't provide the implementation details. Interfaces are often used for creating common, shareable contracts that can be used by multiple classes.
 
-interface Beginning{
-    public String usage();
-public class Welcome_to implements Beginning {
+interface Beginning {
+    String usage();
+}
 
-    public String usage() {...}
+public class Welcome_to implements Beginning {
+    public String usage() { ... }
+}
 
 ## Exception handling:
 Exception handling in Java is a mechanism for dealing with unexpected or erroneous situations that may occur during program execution.
 Exception handling is typically done using try and catch blocks. You enclose the code that might throw an exception within the try block and catch and handle the exception within the catch block.
 
 protected void experience_of() {
-        try {
-        //code...
-        if (gaming_experience < 5) {
-                JOptionPane.showMessageDialog(null, "Unfortunately your experience is insufficient");
-                System.exit(0);
-            } else if (gaming_experience == 5 || gaming_experience > 5) {
-
-            }
-            //Player 2
-
-            if (gaming_experience2 < 5) {
-                JOptionPane.showMessageDialog(null, "Unfortunately your experience is insufficient");
-                System.exit(0);
-
-            } else if (gaming_experience2 == 5 || gaming_experience2 > 5) {
-
-            }
-            //player 3
-
-            if (gaming_experience3 < 5) {
-                JOptionPane.showMessageDialog(null, "Unfortunately your experience is insufficient");
-                System.exit(0);
-            } else if (gaming_experience3 == 5 || gaming_experience3 > 5) {
-
-            }
-        } catch (NumberFormatException e) {
-        //code...
-        }
+    try {
+        // Code
+    } catch (NumberFormatException e) {
+        // Handle exception
     }
+}
 
-    
