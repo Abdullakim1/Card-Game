@@ -12,7 +12,7 @@ public class player_experience<T extends Player> extends experience {
     // Constructor to accept gameSystem reference
     public player_experience(gameSystem<T> game) {
         this.game = game;
-        this.players = game.getPlayers(); // Assumes gameSystem has a getPlayers() method
+        this.players = game.getPlayers();
     }
 
     @Override
