@@ -135,8 +135,11 @@ The method calculateWinProbability() is declared with a parameter of type List<T
  
 
 class Players<T extends Player> {  // <---- Generics declared here
+
     private final List<T> players = new ArrayList<>();
+    
     private final gameSystem<T> game;
+    
     
         // Code operates on elements of type T without knowing the specific type until runtime
 
