@@ -51,19 +51,18 @@ This type of polymorphism is resolved during compile time. In method overloading
 
 Here below, there are some methods, with the same name but different parameters, which are the constructors of the Players. When we create an object of the these classes, we can choose which constructor to call based on the number of arguments we provide. This is compile-time polymorphism because the decision about which constructor to call is made at compile time based on the arguments we pass during object creation.
 
-public class Player {
-    private List<String> hand = new ArrayList<>();
-
-    // Method to add a single card
-    public void addCardToHand(String card) {
-        this.hand.add(card);
+public void reset() {
+        players = new ArrayList<>();
+        gameRunning = true;
+        playerCanceledTurn = false;
+        firstChosenColor = null;
     }
 
-    // Overloaded method to add multiple cards
-    public void addCardToHand(List<String> cards) {
-        this.hand.addAll(cards);
+    public void reset(T specificPlayer) {
+        specificPlayer.resetHand();
+        specificPlayer.setActive(true);
+        playerCanceledTurn = false;
     }
-}
 
 # Polymorphism by Inclusion:
 
