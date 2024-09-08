@@ -132,16 +132,16 @@ Parametric polymorphism allows to write code that can operate on a wide range of
 
 The method calculateWinProbability() is declared with a parameter of type List<T>, where T is a placeholder for a generic type. This means that the method can accept a list of any type. Inside the method, it operates on elements of type T without knowing the specific type until runtime.
 
-public class prob_win_player3<T> { // <---- Generics declared here
+ 
 
-    public String calculateWinProbability(List<T> playerHand) { // <---- List<T> is a generic type
-        StringBuilder result = new StringBuilder();
-        result.append("Probability for Player3: \n\n");
-
+class Players<T extends Player> {  // <---- Generics declared here
+    private final List<T> players = new ArrayList<>();
+    private final gameSystem<T> game;
+    
         // Code operates on elements of type T without knowing the specific type until runtime
 
     }
-}
+
 
 ## Abstraction: 
 Abstraction in programming is a concept that involves hiding the complex implementation details and showing only the essential features of an object. In the provided code, abstraction is highlighted through the use of an abstract class and the abstract methods it defines. The experience class is declared as an abstract class. This means it cannot be instantiated directly and must be subclassed. It contains two abstract methods, experience_of() and general(), which must be implemented by any subclass. This design enforces a contract that any subclass must provide specific implementations for these methods, while the details of these methods are not exposed in the experience class itself.
