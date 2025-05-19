@@ -6,10 +6,12 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class MenuState extends GameState {
-    private ModernButton playButton;
+    private ModernButton vsComputerButton;
+    private ModernButton vsHumanButton;
     private ModernButton rulesButton;
     private ModernButton exitButton;
-    private Rectangle playBounds;
+    private Rectangle vsComputerBounds;
+    private Rectangle vsHumanBounds;
     private Rectangle rulesBounds;
     private Rectangle exitBounds;
 
@@ -26,11 +28,13 @@ public class MenuState extends GameState {
         int spacing = 70;
         int centerX = (800 - buttonWidth) / 2;
 
-        playBounds = new Rectangle(centerX, startY, buttonWidth, buttonHeight);
-        rulesBounds = new Rectangle(centerX, startY + spacing, buttonWidth, buttonHeight);
-        exitBounds = new Rectangle(centerX, startY + spacing * 2, buttonWidth, buttonHeight);
+        vsComputerBounds = new Rectangle(centerX, startY, buttonWidth, buttonHeight);
+        vsHumanBounds = new Rectangle(centerX, startY + spacing, buttonWidth, buttonHeight);
+        rulesBounds = new Rectangle(centerX, startY + spacing * 2, buttonWidth, buttonHeight);
+        exitBounds = new Rectangle(centerX, startY + spacing * 3, buttonWidth, buttonHeight);
 
-        playButton = new ModernButton("Play Game");
+        vsComputerButton = new ModernButton("Play vs Computer");
+        vsHumanButton = new ModernButton("Play vs Human");
         rulesButton = new ModernButton("Rules");
         exitButton = new ModernButton("Exit");
     }
@@ -71,7 +75,8 @@ public class MenuState extends GameState {
         g2d.drawLine(titleX, titleY + 10, titleX + fm.stringWidth(title), titleY + 10);
 
         // Draw buttons with their current bounds
-        playButton.render(g, playBounds.x, playBounds.y, playBounds.width, playBounds.height);
+        vsComputerButton.render(g, vsComputerBounds.x, vsComputerBounds.y, vsComputerBounds.width, vsComputerBounds.height);
+        vsHumanButton.render(g, vsHumanBounds.x, vsHumanBounds.y, vsHumanBounds.width, vsHumanBounds.height);
         rulesButton.render(g, rulesBounds.x, rulesBounds.y, rulesBounds.width, rulesBounds.height);
         exitButton.render(g, exitBounds.x, exitBounds.y, exitBounds.width, exitBounds.height);
 
@@ -88,7 +93,8 @@ public class MenuState extends GameState {
 
         // Handle hover effects
         if (e.getID() == MouseEvent.MOUSE_MOVED) {
-            playButton.setHovered(playBounds.contains(mouse));
+            vsComputerButton.setHovered(vsComputerBounds.contains(mouse));
+            vsHumanButton.setHovered(vsHumanBounds.contains(mouse));
             rulesButton.setHovered(rulesBounds.contains(mouse));
             exitButton.setHovered(exitBounds.contains(mouse));
             return;
@@ -96,8 +102,10 @@ public class MenuState extends GameState {
 
         // Handle button press effects
         if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-            if (playBounds.contains(mouse)) {
-                playButton.setPressed(true);
+            if (vsComputerBounds.contains(mouse)) {
+                vsComputerButton.setPressed(true);
+            } else if (vsHumanBounds.contains(mouse)) {
+                vsHumanButton.setPressed(true);
             } else if (rulesBounds.contains(mouse)) {
                 rulesButton.setPressed(true);
             } else if (exitBounds.contains(mouse)) {
@@ -109,13 +117,16 @@ public class MenuState extends GameState {
         // Handle button release and click effects
         if (e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
             // Reset pressed states
-            playButton.setPressed(false);
+            vsComputerButton.setPressed(false);
+            vsHumanButton.setPressed(false);
             rulesButton.setPressed(false);
             exitButton.setPressed(false);
 
             // Handle button actions
-            if (playBounds.contains(mouse)) {
-                game.setState(new PlayState(game));
+            if (vsComputerBounds.contains(mouse)) {
+                game.setState(new PlayState(game, false));
+            } else if (vsHumanBounds.contains(mouse)) {
+                game.setState(new PlayState(game, true));
             } else if (rulesBounds.contains(mouse)) {
                 game.setState(new RulesState(game));
             } else if (exitBounds.contains(mouse)) {
@@ -127,8 +138,10 @@ public class MenuState extends GameState {
     @Override
     public void onEnter() {
         // Reset button states when entering menu
-        playButton.setHovered(false);
-        playButton.setPressed(false);
+        vsComputerButton.setHovered(false);
+        vsComputerButton.setPressed(false);
+        vsHumanButton.setHovered(false);
+        vsHumanButton.setPressed(false);
         rulesButton.setHovered(false);
         rulesButton.setPressed(false);
         exitButton.setHovered(false);

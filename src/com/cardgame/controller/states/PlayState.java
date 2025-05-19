@@ -16,11 +16,11 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class PlayState extends GameState {
-    private HumanPlayer player;
-    private ComputerPlayer computer;
+    private HumanPlayer player1;
+    private AbstractPlayer player2; // Can be either HumanPlayer or ComputerPlayer
     private Deck deck;
     private Card topCard;
-    private boolean playerTurn;
+    private boolean player1Turn;
     private boolean skipNextTurn;
     private boolean gameOver;
     private String winner;
@@ -31,9 +31,12 @@ public class PlayState extends GameState {
     private Rectangle[] cardBounds;
     private String message;
     private int messageTimer;
+    private boolean isVsComputer;
 
-    public PlayState(Game game) {
-        this(game, null);
+    public PlayState(Game game, boolean isHumanVsHuman) {
+        super(game);
+        this.isVsComputer = !isHumanVsHuman;
+        initializeGame(null);
     }
 
     public PlayState(Game game, List<AbstractPlayer> players) {
@@ -45,23 +48,27 @@ public class PlayState extends GameState {
         deck = new Deck();
         if (players != null && players.size() >= 2) {
             if (players.get(0) instanceof HumanPlayer) {
-                player = (HumanPlayer) players.get(0);
+                player1 = (HumanPlayer) players.get(0);
             } else {
-                player = new HumanPlayer("Player", 0);
+                player1 = new HumanPlayer("Player 1", 0);
             }
-            if (players.get(1) instanceof ComputerPlayer) {
-                computer = (ComputerPlayer) players.get(1);
+            if (players.get(1) instanceof AbstractPlayer) {
+                player2 = players.get(1);
             } else {
-                computer = new ComputerPlayer("Computer", 1);
+                player2 = isVsComputer ? 
+                    new ComputerPlayer("Computer", 1) : 
+                    new HumanPlayer("Player 2", 1);
             }
         } else {
-            player = new HumanPlayer("Player", 0);
-            computer = new ComputerPlayer("Computer", 1);
+            player1 = new HumanPlayer("Player 1", 0);
+            player2 = isVsComputer ? 
+                new ComputerPlayer("Computer", 1) : 
+                new HumanPlayer("Player 2", 1);
         }
         
         // Deal 7 cards to each player
-        player.addCards(deck.draw(7));
-        computer.addCards(deck.draw(7));
+        player1.addCards(deck.draw(7));
+        player2.addCards(deck.draw(7));
         
         // Place first card face up
         topCard = deck.draw();
@@ -73,11 +80,11 @@ public class PlayState extends GameState {
             topCard.setFaceUp(true);
         }
         
-        playerTurn = true;
+        player1Turn = true;
         skipNextTurn = false;
         gameOver = false;
         winner = null;
-        message = "Your turn! Match the color or number";
+        message = "Player 1's turn! Match the color or number";
         messageTimer = 120;
         
         // Initialize UI elements
@@ -90,15 +97,15 @@ public class PlayState extends GameState {
     }
 
     private void updateCardBounds() {
-        List<Card> playerHand = player.getHand();
         int cardWidth = 80;
         int cardHeight = 120;
         int spacing = 20;
-        int startX = (800 - (playerHand.size() * (cardWidth + spacing) - spacing)) / 2;
+        List<Card> currentPlayerHand = player1Turn ? player1.getHand() : player2.getHand();
+        int startX = (800 - (currentPlayerHand.size() * (cardWidth + spacing) - spacing)) / 2;
         int y = 400;
 
-        cardBounds = new Rectangle[playerHand.size()];
-        for (int i = 0; i < playerHand.size(); i++) {
+        cardBounds = new Rectangle[currentPlayerHand.size()];
+        for (int i = 0; i < currentPlayerHand.size(); i++) {
             cardBounds[i] = new Rectangle(startX + i * (cardWidth + spacing), y, cardWidth, cardHeight);
         }
     }
@@ -110,7 +117,7 @@ public class PlayState extends GameState {
         }
 
         // Handle computer's turn
-        if (!playerTurn && !gameOver) {
+        if (!player1Turn && !gameOver && isVsComputer) {
             // Add a small delay before computer plays
             try {
                 Thread.sleep(1000);
@@ -122,15 +129,13 @@ public class PlayState extends GameState {
     }
 
     private void handleComputerTurn() {
-        if (playerTurn || gameOver) return; // Safety check
+        if (player1Turn || gameOver) return; // Safety check
 
-        int playIndex = computer.selectBestMove(topCard);
+        int playIndex = ((ComputerPlayer)player2).selectBestMove(topCard);
         if (playIndex != -1) {
-            Card played = computer.playCard(playIndex);
+            Card played = player2.playCard(playIndex);
             handlePlayedCard(played);
-            if (!skipNextTurn) {
-                playerTurn = true;
-            }
+            player1Turn = true;
             message = "Computer played " + played.getColor() + 
                      (played.isSpecial() ? " special card" : " " + played.getValue());
             messageTimer = 60;
@@ -138,23 +143,21 @@ public class PlayState extends GameState {
             // Draw a card if no playable cards
             Card drawnCard = deck.draw();
             if (drawnCard != null) {
-                computer.addCard(drawnCard);
+                player2.addCard(drawnCard);
                 // Check if drawn card can be played
                 if (drawnCard.matches(topCard)) {
-                    Card played = computer.playCard(computer.handSize() - 1);
+                    Card played = player2.playCard(player2.handSize() - 1);
                     handlePlayedCard(played);
-                    if (!skipNextTurn) {
-                        playerTurn = true;
-                    }
+                    player1Turn = true;
                     message = "Computer drew and played " + played.getColor() + 
                              (played.isSpecial() ? " special card" : " " + played.getValue());
                 } else {
                     message = "Computer drew a card";
-                    playerTurn = true;
+                    player1Turn = true;
                 }
             } else {
                 message = "No cards left to draw!";
-                playerTurn = true;
+                player1Turn = true;
             }
             messageTimer = 60;
         }
@@ -181,10 +184,10 @@ public class PlayState extends GameState {
                     message = "Skip turn!";
                     messageTimer = 60;
                     // Skip turn means current player goes again
-                    playerTurn = !playerTurn;
+                    player1Turn = !player1Turn;
                 }
                 case BLUE -> {
-                    AbstractPlayer target = playerTurn ? computer : player;
+                    AbstractPlayer target = player1Turn ? player2 : player1;
                     target.addCards(deck.draw(2));
                     message = "Draw 2 cards!";
                     messageTimer = 60;
@@ -193,7 +196,7 @@ public class PlayState extends GameState {
                     message = "Reverse! Your turn again!";
                     messageTimer = 60;
                     // Reverse in 2-player game means current player goes again
-                    playerTurn = !playerTurn;
+                    player1Turn = !player1Turn;
                 }
                 case GOLD -> {
                     message = "Wild card played!";
@@ -203,16 +206,15 @@ public class PlayState extends GameState {
         }
 
         // Check for game over
-        if (player.handSize() == 0) {
+        if (player1.handSize() == 0) {
             gameOver = true;
-            winner = "Player";
-            message = "Congratulations! You win!";
-            messageTimer = Integer.MAX_VALUE;
-        } else if (computer.handSize() == 0) {
+            winner = "Player 1";
+            return;
+        }
+        if (player2.handSize() == 0) {
             gameOver = true;
-            winner = "Computer";
-            message = "Game Over! Computer wins!";
-            messageTimer = Integer.MAX_VALUE;
+            winner = isVsComputer ? "Computer" : "Player 2";
+            return;
         }
     }
 
@@ -246,7 +248,7 @@ public class PlayState extends GameState {
             
             // Draw final score
             g.setFont(new Font("Arial", Font.PLAIN, 24));
-            String scoreText = "Final Score - Player: " + (7 - player.handSize()) + " | Computer: " + (7 - computer.handSize());
+            String scoreText = "Final Score - Player 1: " + (7 - player1.handSize()) + " | " + (isVsComputer ? "Computer" : "Player 2") + ": " + (7 - player2.handSize());
             fm = g.getFontMetrics();
             textX = (800 - fm.stringWidth(scoreText)) / 2;
             g.drawString(scoreText, textX, 340);
@@ -266,7 +268,7 @@ public class PlayState extends GameState {
         }
 
         // Draw computer's cards face down
-        List<Card> computerHand = computer.getHand();
+        List<Card> computerHand = player2.getHand();
         int startX = (800 - (computerHand.size() * 100 - 20)) / 2;
         for (int i = 0; i < computerHand.size(); i++) {
             g.setColor(new Color(30, 34, 42));
@@ -274,7 +276,7 @@ public class PlayState extends GameState {
         }
 
         // Draw player's cards
-        List<Card> playerHand = player.getHand();
+        List<Card> playerHand = player1.getHand();
         // Make sure cardBounds array matches the hand size
         if (cardBounds.length != playerHand.size()) {
             updateCardBounds();
@@ -302,13 +304,13 @@ public class PlayState extends GameState {
         // Draw turn indicator
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 24));
-        String turnText = playerTurn ? "Your Turn" : "Computer's Turn";
+        String turnText = player1Turn ? "Your Turn" : (isVsComputer ? "Computer's Turn" : "Player 2's Turn");
         g.drawString(turnText, 20, 30);
 
         // Draw card counts
         g.setFont(new Font("Arial", Font.PLAIN, 18));
-        g.drawString("Your Cards: " + player.handSize(), 20, 550);
-        g.drawString("Computer's Cards: " + computer.handSize(), 20, 80);
+        g.drawString("Your Cards: " + player1.handSize(), 20, 550);
+        g.drawString((isVsComputer ? "Computer's Cards" : "Player 2's Cards") + ": " + player2.handSize(), 20, 80);
         g.drawString("Deck: " + deck.remainingCards(), 650, 180);
     }
 
@@ -339,7 +341,7 @@ public class PlayState extends GameState {
         }
 
         // Only handle player interactions during their turn
-        if (!playerTurn) return;
+        if ((!player1Turn && isVsComputer) || (!player1Turn && !isVsComputer && cardBounds == null)) return;
 
         if (e.getID() == MouseEvent.MOUSE_MOVED) {
             drawButton.setHovered(drawBounds.contains(mouse));
@@ -369,10 +371,10 @@ public class PlayState extends GameState {
             if (drawBounds.contains(mouse)) {
                 Card drawnCard = deck.draw();
                 if (drawnCard != null) {
-                    player.addCard(drawnCard);
+                    player1.addCard(drawnCard);
                     message = "You drew a card";
                     messageTimer = 60;
-                    playerTurn = false;  // End player's turn after drawing
+                    player1Turn = false;  // End player's turn after drawing
                     updateCardBounds();
                 } else {
                     message = "No cards left to draw!";
@@ -382,16 +384,18 @@ public class PlayState extends GameState {
             }
 
             // Handle card clicks
-            List<Card> playerHand = player.getHand();
-            for (int i = 0; i < cardBounds.length && i < playerHand.size(); i++) {
+            AbstractPlayer currentPlayer = player1Turn ? player1 : player2;
+            List<Card> currentHand = currentPlayer.getHand();
+            for (int i = 0; i < cardBounds.length && i < currentHand.size(); i++) {
                 if (cardBounds[i].contains(mouse)) {
-                    Card selectedCard = playerHand.get(i);
+                    Card selectedCard = currentHand.get(i);
                     if (selectedCard.matches(topCard)) {
-                        Card played = player.playCard(i);
+                        Card played = currentPlayer.playCard(i);
                         handlePlayedCard(played);
-                        playerTurn = false;
+                        player1Turn = !player1Turn;
                         updateCardBounds();
-                        message = "You played " + played.getColor() + 
+                        String playerName = player1Turn ? "Player 2" : "Player 1";
+                        message = playerName + " played " + played.getColor() + 
                                  (played.isSpecial() ? " special card" : " " + played.getValue());
                         messageTimer = 60;
                     } else {

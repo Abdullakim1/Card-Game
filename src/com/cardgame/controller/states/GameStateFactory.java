@@ -16,7 +16,7 @@ class MenuStateFactory implements GameStateFactory {
 class PlayStateFactory implements GameStateFactory {
     @Override
     public GameState createState(Game game) {
-        return new PlayState(game);
+        return new PlayState(game, false); // Default to vs computer mode
     }
 }
 
