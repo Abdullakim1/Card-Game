@@ -429,7 +429,10 @@ public class PlayState extends GameState {
 
         // Draw top card
         if (topCard != null) {
-            topCard.render(g, 550, 200, 80, 120);
+            // Create a temporary copy of the top card for rendering to ensure it's always displayed correctly
+            Card tempTopCard = new Card(topCard.getColor(), topCard.getValue());
+            tempTopCard.setFaceUp(true);
+            tempTopCard.render(g, 550, 200, 80, 120);
         }
 
         // Draw current player indicator with a more visible highlight
