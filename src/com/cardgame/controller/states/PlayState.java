@@ -155,7 +155,17 @@ public class PlayState extends GameState {
             return;
         }
         
-        // In multiplayer mode, all players are human, so no computer turn handling needed
+        // Handle computer turns
+        Player currentPlayer = getCurrentPlayer();
+        if (currentPlayer.isComputer() && !gameOver) {
+            // Add a small delay before computer plays
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            handleComputerTurn();
+        }
     }
 
     private void handleComputerTurn() {

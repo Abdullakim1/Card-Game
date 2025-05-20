@@ -146,8 +146,8 @@ public class PlayerSelectionState extends GameState {
         System.out.println("Starting game with " + playerNames.size() + " players");
         
         // Allow starting with just the default players (no minimum required)
-        // Start the game with only human players (no computer)
-        game.setState(new PlayState(game, playerNames, false));
+        // Include a computer player in the game
+        game.setState(new PlayState(game, playerNames, true));
     }
     
 
