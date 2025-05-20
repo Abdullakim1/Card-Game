@@ -2,11 +2,14 @@ package com.cardgame;
 
 import com.cardgame.controller.states.GameState;
 import com.cardgame.controller.states.MenuState;
+import com.cardgame.controller.states.PlayerSelectionState;
 import com.cardgame.view.animations.CardAnimation;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -80,6 +83,20 @@ public class Game extends JFrame implements Runnable {
                 }
             }
         });
+        
+        // Add keyboard listener
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (currentState != null && currentState instanceof PlayerSelectionState) {
+                    ((PlayerSelectionState) currentState).handleKeyEvent(e.getKeyChar(), e.getKeyCode());
+                }
+            }
+        });
+        
+        // Make sure the frame can receive keyboard events
+        setFocusable(true);
+        requestFocus();
 
         // Start with menu state
         setState(new MenuState(this));
