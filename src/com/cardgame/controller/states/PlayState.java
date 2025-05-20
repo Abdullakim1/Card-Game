@@ -109,13 +109,8 @@ public class PlayState extends GameState {
     }
 
     private void updateCardBounds() {
-        // Only show cards for the current player if they're human
+        // Show cards for the current player (all players are human in multiplayer mode)
         Player currentPlayer = getCurrentPlayer();
-        if (currentPlayer.isComputer()) {
-            cardBounds = new Rectangle[0];
-            return;
-        }
-
         List<Card> playerHand = currentPlayer.getHand();
         int cardWidth = 80;
         int cardHeight = 120;
@@ -160,17 +155,7 @@ public class PlayState extends GameState {
             return;
         }
         
-        // Handle computer turns
-        Player currentPlayer = getCurrentPlayer();
-        if (currentPlayer.isComputer() && !gameOver) {
-            // Add a small delay before computer plays
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            handleComputerTurn();
-        }
+        // In multiplayer mode, all players are human, so no computer turn handling needed
     }
 
     private void handleComputerTurn() {
@@ -435,12 +420,27 @@ public class PlayState extends GameState {
             topCard.render(g, 550, 200, 80, 120);
         }
 
-        // Draw current player indicator
+        // Draw current player indicator with a more visible highlight
         Player currentPlayer = getCurrentPlayer();
         g.setFont(new Font("Arial", Font.BOLD, 24));
-        g.setColor(Color.YELLOW);
+        
+        // Create a background highlight for the current player
         String turnText = currentPlayer.getName() + "'s Turn";
-        g.drawString(turnText, 20, 50);
+        FontMetrics metrics = g.getFontMetrics();
+        int textWidth = metrics.stringWidth(turnText);
+        
+        // Draw highlight background
+        g.setColor(new Color(65, 105, 225, 180)); // Semi-transparent blue
+        g.fillRoundRect(15, 25, textWidth + 20, 35, 10, 10);
+        
+        // Draw border
+        g.setColor(new Color(100, 140, 255));
+        ((Graphics2D)g).setStroke(new BasicStroke(2));
+        g.drawRoundRect(15, 25, textWidth + 20, 35, 10, 10);
+        
+        // Draw text
+        g.setColor(Color.WHITE);
+        g.drawString(turnText, 25, 50);
 
         // Draw all players' hands
         int playerInfoX = 20;
@@ -451,17 +451,17 @@ public class PlayState extends GameState {
             Player p = players.get(i);
             g.setFont(new Font("Arial", Font.BOLD, 18));
 
-            // Highlight current player
+            // Highlight current player in the list
             if (i == currentPlayerIndex) {
-                g.setColor(new Color(255, 255, 0, 100));
-                g.fillRect(playerInfoX - 5, playerInfoY - 20, 200, 25);
+                g.setColor(new Color(65, 105, 225, 100)); // Matching blue highlight
+                g.fillRoundRect(playerInfoX - 5, playerInfoY - 20, 200, 25, 5, 5);
             }
 
             g.setColor(Color.WHITE);
             g.drawString(p.getName() + "'s Hand: " + p.handSize() + " cards", playerInfoX, playerInfoY);
 
-            // If this is not the current player or is a computer, draw cards face down
-            if (i != currentPlayerIndex || p.isComputer()) {
+            // If this is not the current player, draw cards face down (all players are human in multiplayer)
+            if (i != currentPlayerIndex) {
                 int cardWidth = 40;
                 int cardHeight = 60;
                 int cardSpacing = 10;
