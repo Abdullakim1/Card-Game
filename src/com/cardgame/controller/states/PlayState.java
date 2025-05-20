@@ -507,8 +507,11 @@ public class PlayState extends GameState {
             List<Card> playerHand = currentPlayer.getHand();
             for (int i = 0; i < playerHand.size() && i < cardBounds.length; i++) {
                 Card card = playerHand.get(i);
-                card.setFaceUp(true); // Player can see their own cards
-                card.render(g, cardBounds[i].x, cardBounds[i].y, cardBounds[i].width, cardBounds[i].height);
+                // Don't modify the card's faceUp property, just render it face up
+                // Create a temporary copy of the card for rendering
+                Card tempCard = new Card(card.getColor(), card.getValue());
+                tempCard.setFaceUp(true);
+                tempCard.render(g, cardBounds[i].x, cardBounds[i].y, cardBounds[i].width, cardBounds[i].height);
             }
         }
 
