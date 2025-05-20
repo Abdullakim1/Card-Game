@@ -34,6 +34,7 @@ public class PlayState extends GameState {
     private int outcomeAnimationTimer;
     private static final int OUTCOME_ANIMATION_DURATION = 300; // 5 seconds at 60 FPS
     private int direction = 1; // 1 for clockwise, -1 for counter-clockwise
+    private boolean includeComputer; // Flag to track if we're including a computer player
 
     public PlayState(Game game) {
         super(game);
@@ -46,6 +47,7 @@ public class PlayState extends GameState {
     public PlayState(Game game, List<String> playerNames, boolean includeComputer) {
         super(game);
         players = new ArrayList<>();
+        this.includeComputer = includeComputer;
 
         // Add human players
         for (String name : playerNames) {
@@ -459,6 +461,12 @@ public class PlayState extends GameState {
 
         for (int i = 0; i < players.size(); i++) {
             Player p = players.get(i);
+            
+            // Skip computer players in the display for human-only multiplayer
+            if (p.isComputer() && !includeComputer) {
+                continue;
+            }
+            
             g.setFont(new Font("Arial", Font.BOLD, 18));
 
             // Highlight current player in the list

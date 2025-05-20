@@ -146,8 +146,8 @@ public class PlayerSelectionState extends GameState {
         System.out.println("Starting game with " + playerNames.size() + " players");
         
         // Allow starting with just the default players (no minimum required)
-        // Include a computer player in the game
-        game.setState(new PlayState(game, playerNames, true));
+        // Do NOT include a computer player in the game - purely human multiplayer
+        game.setState(new PlayState(game, playerNames, false));
     }
     
 
@@ -195,7 +195,7 @@ public class PlayerSelectionState extends GameState {
             g.drawString(text, bounds.x + 15, bounds.y + 28);
             
             // Draw remove button (X) - red circle with X
-            if (playerNames.size() > 1) {
+            if (playerNames.size() > 1 && i < removePlayerBounds.size()) {
                 Rectangle removeBounds = removePlayerBounds.get(i);
                 
                 // Red circle
