@@ -124,9 +124,9 @@ public class MenuState extends GameState {
 
             // Handle button actions
             if (vsComputerBounds.contains(mouse)) {
-                game.setState(new PlayState(game, false));
+                game.setState(new PlayerSetupState(game, true)); // true = vs computer
             } else if (vsHumanBounds.contains(mouse)) {
-                game.setState(new PlayState(game, true));
+                game.setState(new PlayerSetupState(game, false)); // false = human vs human
             } else if (rulesBounds.contains(mouse)) {
                 game.setState(new RulesState(game));
             } else if (exitBounds.contains(mouse)) {
