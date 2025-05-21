@@ -124,9 +124,13 @@ public class MenuState extends GameState {
 
             // Handle button actions
             if (playBounds.contains(mouse)) {
-                game.setState(new PlayState(game));
+                // Redirect to single player name entry for vs Computer mode
+                game.setState(new SinglePlayerNameState(game));
             } else if (humanPlayBounds.contains(mouse)) {
-                game.setState(new PlayerSelectionState(game));
+                // Human-only multiplayer mode
+                PlayerSelectionState state = new PlayerSelectionState(game);
+                state.setIncludeComputer(false);
+                game.setState(state);
             } else if (rulesBounds.contains(mouse)) {
                 game.setState(new RulesState(game));
             } else if (exitBounds.contains(mouse)) {

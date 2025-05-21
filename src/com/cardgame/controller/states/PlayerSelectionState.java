@@ -36,6 +36,11 @@ public class PlayerSelectionState extends GameState {
     private int selectedPlayerIndex;
     private String currentInput;
     private boolean isInputActive;
+    private boolean includeComputer = false; // Flag to indicate if we should include a computer player
+    
+    // Message display
+    private String message = "";
+    private int messageTimer = 0;
     
     /**
      * Creates a new player selection state.
@@ -56,8 +61,6 @@ public class PlayerSelectionState extends GameState {
         
         // Add default players
         playerNames.add("Player 1");
-        playerNames.add("Player 2");
-        playerNames.add("Player 3");
         updatePlayerBounds();
     }
     
@@ -144,17 +147,38 @@ public class PlayerSelectionState extends GameState {
     private void startGame() {
         // Debug message to check player count
         System.out.println("Starting game with " + playerNames.size() + " players");
+        System.out.println("Include computer: " + includeComputer);
         
-        // Allow starting with just the default players (no minimum required)
-        // Do NOT include a computer player in the game - purely human multiplayer
-        game.setState(new PlayState(game, playerNames, false));
+        // For multiplayer mode (no computer), require at least 2 players
+        if (!includeComputer && playerNames.size() < 2) {
+            // Show a message to add more players
+            System.out.println("Need at least 2 players for multiplayer mode");
+            message = "Please add at least 2 players for multiplayer mode";
+            messageTimer = 180; // Show for 3 seconds at 60 FPS
+            return; // Don't start the game yet
+        }
+        
+        // Start the game with the appropriate player configuration
+        game.setState(new PlayState(game, playerNames, includeComputer));
+    }
+    
+    /**
+     * Sets whether to include a computer player in the game.
+     * 
+     * @param includeComputer True to include a computer player, false for human-only
+     */
+    public void setIncludeComputer(boolean includeComputer) {
+        this.includeComputer = includeComputer;
     }
     
 
     
     @Override
     public void tick() {
-        // No continuous updates needed
+        // Update message timer
+        if (messageTimer > 0) {
+            messageTimer--;
+        }
     }
     
     @Override
@@ -213,6 +237,15 @@ public class PlayerSelectionState extends GameState {
         addPlayerButton.render(g, addPlayerBounds.x, addPlayerBounds.y, addPlayerBounds.width, addPlayerBounds.height);
         startGameButton.render(g, startGameBounds.x, startGameBounds.y, startGameBounds.width, startGameBounds.height);
         backButton.render(g, backBounds.x, backBounds.y, backBounds.width, backBounds.height);
+        
+        // Draw message if timer is active
+        if (messageTimer > 0) {
+            g.setFont(new Font("Arial", Font.BOLD, 18));
+            g.setColor(new Color(255, 100, 100)); // Red color for warning
+            FontMetrics messageFm = g.getFontMetrics();
+            int messageX = (800 - messageFm.stringWidth(message)) / 2;
+            g.drawString(message, messageX, 500);
+        }
     }
     
     @Override

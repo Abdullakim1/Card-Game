@@ -3,6 +3,7 @@ package com.cardgame;
 import com.cardgame.controller.states.GameState;
 import com.cardgame.controller.states.MenuState;
 import com.cardgame.controller.states.PlayerSelectionState;
+import com.cardgame.controller.states.SinglePlayerNameState;
 import com.cardgame.view.animations.CardAnimation;
 
 import javax.swing.JFrame;
@@ -87,9 +88,28 @@ public class Game extends JFrame implements Runnable {
         // Add keyboard listener
         addKeyListener(new KeyAdapter() {
             @Override
+            public void keyTyped(KeyEvent e) {
+                if (currentState != null) {
+                    if (currentState instanceof PlayerSelectionState) {
+                        // Only handle regular character input in keyTyped
+                        if (Character.isLetterOrDigit(e.getKeyChar()) || Character.isSpaceChar(e.getKeyChar())) {
+                            ((PlayerSelectionState) currentState).handleKeyEvent(e.getKeyChar(), e.getKeyCode());
+                        }
+                    } else if (currentState instanceof SinglePlayerNameState) {
+                        ((SinglePlayerNameState) currentState).processKeyEvent(e);
+                    }
+                }
+            }
+            
+            @Override
             public void keyPressed(KeyEvent e) {
+                // Handle special keys like backspace, enter, and escape
                 if (currentState != null && currentState instanceof PlayerSelectionState) {
-                    ((PlayerSelectionState) currentState).handleKeyEvent(e.getKeyChar(), e.getKeyCode());
+                    // Only handle special keys in keyPressed (backspace, enter, escape)
+                    int keyCode = e.getKeyCode();
+                    if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_ENTER || keyCode == KeyEvent.VK_ESCAPE) {
+                        ((PlayerSelectionState) currentState).handleKeyEvent(e.getKeyChar(), keyCode);
+                    }
                 }
             }
         });
