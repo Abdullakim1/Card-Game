@@ -299,27 +299,30 @@ public class PlayState extends GameState {
             switch (played.getColor()) {
                 case RED: {
                     // Skip next player's turn
-                    skipNextTurn = true;
-                    message = "Skip turn!";
+                    message = "Skip opponent's turn!";
                     messageTimer = 60;
-                    nextPlayer(); // Skip to the player after the next
+                    // Skip the next player's turn by moving to the next player
+                    // and then setting the flag to skip the following turn
+                    nextPlayer();
+                    // Then immediately move to the next player (skipping the opponent)
+                    nextPlayer();
                     break;
                 }
                 case BLUE: {
-                    // Reverse direction (matters in multiplayer)
-                    direction *= -1; // Flip the direction
-                    message = "Direction reversed!";
-                    messageTimer = 60;
-                    break;
-                }
-                case GREEN: {
-                    // Draw 2 cards for the next player
+                    // Opponent draws two cards
                     int nextPlayerIdx = (currentPlayerIndex + direction + players.size()) % players.size();
                     Player nextPlayer = players.get(nextPlayerIdx);
                     nextPlayer.addCards(deck.draw(2));
                     message = nextPlayer.getName() + " draws 2 cards!";
                     messageTimer = 60;
                     break;
+                }
+                case GREEN: {
+                    // Reverse - current player gets another turn
+                    message = "Reverse! You get another turn!";
+                    messageTimer = 60;
+                    // Don't call nextPlayer() so the current player gets another turn
+                    return; // Exit the method early to prevent nextPlayer() at the end
                 }
                 case GOLD: {
                     // Wild card - no special effect
