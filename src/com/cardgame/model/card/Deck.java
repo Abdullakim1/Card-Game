@@ -27,20 +27,15 @@ public class Deck {
             }
         }
 
-        // Add special cards
-        // RED - Skip turn
         for (int i = 0; i < 2; i++) {
             cards.add(new Card(Card.CardColor.RED, -1));
         }
-        // BLUE - Draw two
         for (int i = 0; i < 2; i++) {
             cards.add(new Card(Card.CardColor.BLUE, -1));
         }
-        // GREEN - Reverse
         for (int i = 0; i < 2; i++) {
             cards.add(new Card(Card.CardColor.GREEN, -1));
         }
-        // GOLD - Wild
         for (int i = 0; i < 4; i++) {
             cards.add(new Card(Card.CardColor.GOLD, -1));
         }
@@ -59,7 +54,7 @@ public class Deck {
         if (cards.isEmpty()) {
             recycleDiscardPile();
             if (cards.isEmpty()) {
-                return null;  // No cards left even after recycling
+                return null;  
             }
         }
         return cards.remove(cards.size() - 1);
@@ -72,7 +67,7 @@ public class Deck {
             if (card != null) {
                 drawnCards.add(card);
             } else {
-                break;  // No more cards to draw
+                break;  
             }
         }
         return drawnCards;
@@ -89,17 +84,13 @@ public class Deck {
             return;
         }
         
-        // Keep the top card in the discard pile
         Card topCard = discardPile.remove(discardPile.size() - 1);
         
-        // Add all other cards back to the deck
         cards.addAll(discardPile);
         discardPile.clear();
         
-        // Shuffle the recycled cards
         shuffle();
         
-        // Put the top card back in the discard pile
         discardPile.add(topCard);
     }
 

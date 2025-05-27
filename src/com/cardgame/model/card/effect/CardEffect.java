@@ -9,16 +9,7 @@ import com.cardgame.model.player.Player;
  * without modifying existing code (Open/Closed Principle)
  */
 public interface CardEffect {
-    /**
-     * Applies the effect of a card
-     * @param state The current play state
-     * @param player The player affected by this effect
-     */
-    void apply(PlayState state, Player player);
     
-    /**
-     * Gets a description of this effect
-     * @return A human-readable description
-     */
+    void apply(PlayState state, Player player);
     String getDescription();
 }

@@ -191,31 +191,27 @@ public class PlayState extends GameState {
         topCard = played;
         topCard.setFaceUp(true);
 
-        // Handle special card effects
+        // Handle special card effects using the CardEffectFactory
         if (played.isSpecial()) {
-            switch (played.getColor()) {
-                case RED -> {
-                    skipNextTurn = true;
-                    message = "Skip turn!";
-                    messageTimer = 60;
-                    // Skip turn means current player goes again
+            CardEffect effect = CardEffectFactory.createEffect(played);
+            if (effect != null) {
+                // Apply the effect and get its description for the message
+                Player target = playerTurn ? computer : player;
+                effect.apply(this, target);
+                message = effect.getDescription();
+                messageTimer = 60;
+                
+                // Special handling for specific effects
+                if (effect instanceof SkipTurnEffect || effect instanceof ReverseDirectionEffect) {
+                    // For skip and reverse in 2-player game, current player goes again
                     playerTurn = !playerTurn;
                 }
-                case BLUE -> {
-                    Player target = playerTurn ? computer : player;
-                    target.addCards(deck.draw(2));
-                    message = "Draw 2 cards!";
-                    messageTimer = 60;
-                }
-                case GREEN -> {
-                    message = "Reverse! Your turn again!";
-                    messageTimer = 60;
-                    // Reverse in 2-player game means current player goes again
-                    playerTurn = !playerTurn;
-                }
-                case GOLD -> {
+                
+                // Special handling for wild card
+                if (effect instanceof WildCardEffect) {
+                    // In a real implementation, this would prompt the player to choose a color
+                    // For now, we'll just set a message
                     message = "Wild card played!";
-                    messageTimer = 60;
                 }
             }
         }
