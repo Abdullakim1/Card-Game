@@ -16,12 +16,11 @@ public class Deck {
     }
 
     private void initializeDeck() {
-        // Add number cards (0-9) for each color
         for (Card.CardColor color : Card.CardColor.values()) {
-            if (color != Card.CardColor.GOLD) {  // Skip GOLD for number cards
+            if (color != Card.CardColor.GOLD) {  
                 for (int number = 0; number <= 9; number++) {
                     cards.add(new Card(color, number));
-                    if (number != 0) {  // Add duplicates of non-zero numbers
+                    if (number != 0) {  
                         cards.add(new Card(color, number));
                     }
                 }

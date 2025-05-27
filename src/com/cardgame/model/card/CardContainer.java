@@ -5,14 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
-/**
- * Generic container for cards demonstrating parametric polymorphism
- * @param <T> Type of card to be stored in this container
- */
 public class CardContainer<T extends Card> {
-    // Information hiding: private field (step 1)
-    // Instance variable (step 2)
-    // Variable, not constant (step 3)
     private final List<T> cards;
     
     public CardContainer() {
@@ -50,11 +43,9 @@ public class CardContainer<T extends Card> {
     }
     
     public List<T> getCards() {
-        // Return an unmodifiable view to maintain encapsulation
         return Collections.unmodifiableList(cards);
     }
     
-    // Demonstrates functional programming with generics
     public List<T> filter(Predicate<T> condition) {
         List<T> result = new ArrayList<>();
         for (T card : cards) {
