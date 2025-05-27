@@ -120,6 +120,7 @@ public class PlayState extends GameState {
         int startX = (800 - (playerHand.size() * (cardWidth + spacing) - spacing)) / 2;
         int y = 400;
 
+        // Create new array with exact size of player's hand
         cardBounds = new Rectangle[playerHand.size()];
         for (int i = 0; i < playerHand.size(); i++) {
             cardBounds[i] = new Rectangle(startX + i * (cardWidth + spacing), y, cardWidth, cardHeight);
@@ -299,17 +300,14 @@ public class PlayState extends GameState {
             switch (played.getColor()) {
                 case RED: {
                     // Skip next player's turn
-                    message = "Skip opponent's turn!";
+                    message = "Skip next player's turn!";
                     messageTimer = 60;
-                    // Skip the next player's turn by moving to the next player
-                    // and then setting the flag to skip the following turn
+                    // Skip the next player by advancing twice
                     nextPlayer();
-                    // Then immediately move to the next player (skipping the opponent)
-                    nextPlayer();
-                    break;
+                    return; // Exit early to prevent the normal nextPlayer() call at the end
                 }
                 case BLUE: {
-                    // Opponent draws two cards
+                    // Next player draws two cards
                     int nextPlayerIdx = (currentPlayerIndex + direction + players.size()) % players.size();
                     Player nextPlayer = players.get(nextPlayerIdx);
                     nextPlayer.addCards(deck.draw(2));
@@ -318,14 +316,14 @@ public class PlayState extends GameState {
                     break;
                 }
                 case GREEN: {
-                    // Reverse - current player gets another turn
-                    message = "Reverse! You get another turn!";
+                    // Reverse direction of play
+                    direction *= -1; // Flip between 1 and -1
+                    message = "Reverse! Direction changed!";
                     messageTimer = 60;
-                    // Don't call nextPlayer() so the current player gets another turn
-                    return; // Exit the method early to prevent nextPlayer() at the end
+                    break;
                 }
                 case GOLD: {
-                    // Wild card - no special effect
+                    // Wild card - can be played on any card
                     message = "Wild card played!";
                     messageTimer = 60;
                     break;
@@ -619,7 +617,9 @@ public class PlayState extends GameState {
 
             // Handle card clicks
             List<Card> playerHand = currentPlayer.getHand();
-            for (int i = 0; i < cardBounds.length && i < playerHand.size(); i++) {
+            // Make sure we don't try to access more cards than we have bounds for
+            int cardsToCheck = Math.min(cardBounds.length, playerHand.size());
+            for (int i = 0; i < cardsToCheck; i++) {
                 if (cardBounds[i].contains(mouse)) {
                     Card selectedCard = playerHand.get(i);
                     if (selectedCard.matches(topCard)) {

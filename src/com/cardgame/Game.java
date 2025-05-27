@@ -22,7 +22,16 @@ public class Game extends JFrame implements Runnable {
     private static final int WIDTH = 800;
     private static final int HEIGHT = 600;
     private static final String TITLE = "Card Game";
-
+    
+    private boolean isFullScreen = true;
+    private Rectangle windowedBounds;
+    private int screenWidth;
+    private int screenHeight;
+    
+    // Scaling factors for fullscreen mode
+    private float scaleX = 1.0f;
+    private float scaleY = 1.0f;
+    
     private boolean running;
     private Thread gameThread;
     private BufferStrategy bs;
@@ -33,32 +42,69 @@ public class Game extends JFrame implements Runnable {
 
     public Game() {
         setTitle(TITLE);
-        setSize(WIDTH, HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setResizable(false);
-        setLocationRelativeTo(null);
-
+        
+        // Get screen dimensions
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice gd = ge.getDefaultScreenDevice();
+        screenWidth = gd.getDisplayMode().getWidth();
+        screenHeight = gd.getDisplayMode().getHeight();
+        
+        // Calculate scaling factors
+        updateScalingFactors();
+        
+        // Store windowed mode bounds for toggling
+        windowedBounds = new Rectangle((screenWidth - WIDTH) / 2, (screenHeight - HEIGHT) / 2, WIDTH, HEIGHT);
+        
+        // Set fullscreen by default
+        if (isFullScreen) {
+            setUndecorated(true);
+            setExtendedState(JFrame.MAXIMIZED_BOTH);
+        } else {
+            setSize(WIDTH, HEIGHT);
+            setResizable(false);
+            setLocationRelativeTo(null);
+        }
+        
         cardAnimation = new CardAnimation();
 
         addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (currentState != null) {
-                    currentState.handleMouseEvent(e);
+                    // Convert coordinates if in fullscreen mode
+                    if (isFullScreen) {
+                        MouseEvent scaledEvent = createScaledMouseEvent(e);
+                        currentState.handleMouseEvent(scaledEvent);
+                    } else {
+                        currentState.handleMouseEvent(e);
+                    }
                 }
             }
 
             @Override
             public void mousePressed(MouseEvent e) {
                 if (currentState != null) {
-                    currentState.handleMouseEvent(e);
+                    // Convert coordinates if in fullscreen mode
+                    if (isFullScreen) {
+                        MouseEvent scaledEvent = createScaledMouseEvent(e);
+                        currentState.handleMouseEvent(scaledEvent);
+                    } else {
+                        currentState.handleMouseEvent(e);
+                    }
                 }
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
                 if (currentState != null) {
-                    currentState.handleMouseEvent(e);
+                    // Convert coordinates if in fullscreen mode
+                    if (isFullScreen) {
+                        MouseEvent scaledEvent = createScaledMouseEvent(e);
+                        currentState.handleMouseEvent(scaledEvent);
+                    } else {
+                        currentState.handleMouseEvent(e);
+                    }
                 }
             }
 
@@ -73,14 +119,26 @@ public class Game extends JFrame implements Runnable {
             @Override
             public void mouseDragged(MouseEvent e) {
                 if (currentState != null) {
-                    currentState.handleMouseEvent(e);
+                    // Convert coordinates if in fullscreen mode
+                    if (isFullScreen) {
+                        MouseEvent scaledEvent = createScaledMouseEvent(e);
+                        currentState.handleMouseEvent(scaledEvent);
+                    } else {
+                        currentState.handleMouseEvent(e);
+                    }
                 }
             }
 
             @Override
             public void mouseMoved(MouseEvent e) {
                 if (currentState != null) {
-                    currentState.handleMouseEvent(e);
+                    // Convert coordinates if in fullscreen mode
+                    if (isFullScreen) {
+                        MouseEvent scaledEvent = createScaledMouseEvent(e);
+                        currentState.handleMouseEvent(scaledEvent);
+                    } else {
+                        currentState.handleMouseEvent(e);
+                    }
                 }
             }
         });
@@ -117,6 +175,18 @@ public class Game extends JFrame implements Runnable {
         // Make sure the frame can receive keyboard events
         setFocusable(true);
         requestFocus();
+        
+        // Add key listener for toggling fullscreen with F11
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_F11) {
+                    toggleFullScreen();
+                } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE && isFullScreen) {
+                    toggleFullScreen();
+                }
+            }
+        });
 
         // Start with menu state
         setState(new MenuState(this));
@@ -201,6 +271,12 @@ public class Game extends JFrame implements Runnable {
         // Clear screen
         g2d.setColor(Color.BLACK);
         g2d.fillRect(0, 0, getWidth(), getHeight());
+        
+        if (isFullScreen) {
+            // Apply scaling transformation in fullscreen mode
+            g2d.translate((getWidth() - WIDTH * scaleX) / 2, (getHeight() - HEIGHT * scaleY) / 2);
+            g2d.scale(scaleX, scaleY);
+        }
 
         // Render current state
         if (currentState != null) {
@@ -228,6 +304,112 @@ public class Game extends JFrame implements Runnable {
 
     public CardAnimation getCardAnimation() {
         return cardAnimation;
+    }
+    
+    /**
+     * Toggles between fullscreen and windowed mode
+     */
+    public void toggleFullScreen() {
+        isFullScreen = !isFullScreen;
+        
+        dispose(); // Dispose the current frame
+        
+        if (isFullScreen) {
+            setUndecorated(true);
+            setExtendedState(JFrame.MAXIMIZED_BOTH);
+        } else {
+            setUndecorated(false);
+            setBounds(windowedBounds);
+            setResizable(false);
+        }
+        
+        // Update scaling factors
+        updateScalingFactors();
+        
+        setVisible(true);
+        createBufferStrategy(3);
+        bs = getBufferStrategy();
+    }
+    
+    /**
+     * Returns the current screen width
+     */
+    public int getScreenWidth() {
+        return isFullScreen ? screenWidth : WIDTH;
+    }
+    
+    /**
+     * Returns the current screen height
+     */
+    public int getScreenHeight() {
+        return isFullScreen ? screenHeight : HEIGHT;
+    }
+    
+    /**
+     * Checks if the game is in fullscreen mode
+     */
+    public boolean isFullScreen() {
+        return isFullScreen;
+    }
+    
+    /**
+     * Updates scaling factors based on current screen size
+     */
+    private void updateScalingFactors() {
+        if (isFullScreen) {
+            scaleX = (float) screenWidth / WIDTH;
+            scaleY = (float) screenHeight / HEIGHT;
+            
+            // Use the smaller scaling factor to maintain aspect ratio
+            float scale = Math.min(scaleX, scaleY);
+            scaleX = scale;
+            scaleY = scale;
+        } else {
+            scaleX = 1.0f;
+            scaleY = 1.0f;
+        }
+    }
+    
+    /**
+     * Converts screen X coordinate to game coordinate
+     */
+    public int screenToGameX(int screenX) {
+        if (isFullScreen) {
+            int offsetX = (int)((getWidth() - WIDTH * scaleX) / 2);
+            return (int)((screenX - offsetX) / scaleX);
+        }
+        return screenX;
+    }
+    
+    /**
+     * Converts screen Y coordinate to game coordinate
+     */
+    public int screenToGameY(int screenY) {
+        if (isFullScreen) {
+            int offsetY = (int)((getHeight() - HEIGHT * scaleY) / 2);
+            return (int)((screenY - offsetY) / scaleY);
+        }
+        return screenY;
+    }
+    
+    /**
+     * Creates a scaled mouse event with converted coordinates for fullscreen mode
+     */
+    private MouseEvent createScaledMouseEvent(MouseEvent original) {
+        int scaledX = screenToGameX(original.getX());
+        int scaledY = screenToGameY(original.getY());
+        
+        return new MouseEvent(
+            original.getComponent(),
+            original.getID(),
+            original.getWhen(),
+            original.getModifiersEx(),
+            scaledX,
+            scaledY,
+            original.getClickCount(),
+            original.isPopupTrigger(),
+            original.getButton()
+        );
     }
 
     public void runLater(Runnable action) {
