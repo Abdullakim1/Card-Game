@@ -104,6 +104,15 @@ public class PlayState extends GameState {
     private void handleComputerTurn() {
         if (playerTurn || gameOver) return; // Safety check
 
+        // Check if the computer's turn should be skipped
+        if (skipNextTurn) {
+            skipNextTurn = false; // Reset the flag
+            playerTurn = true; // Skip back to player's turn
+            message = "Computer's turn was skipped!";
+            messageTimer = 60;
+            return;
+        }
+
         List<Card> computerHand = computer.getHand();
         Card playedCard = null;
         int playIndex = -1;
@@ -146,8 +155,16 @@ public class PlayState extends GameState {
             // Play the card
             playedCard = computer.playCard(playIndex);
             handlePlayedCard(playedCard);
+            // If skipNextTurn is true after handling the card effect, player gets another turn
+            // Otherwise, switch to player's turn normally
             if (!skipNextTurn) {
                 playerTurn = true;
+            } else {
+                // If computer played a skip card, the player's turn is skipped
+                // and the computer gets another turn
+                playerTurn = false;
+                message = "Your turn was skipped!";
+                skipNextTurn = false; // Reset the flag
             }
             message = "Computer played " + playedCard.getColor() + 
                      (playedCard.isSpecial() ? " special card" : " " + playedCard.getValue());
@@ -161,8 +178,16 @@ public class PlayState extends GameState {
                 if (drawnCard.matches(topCard)) {
                     playedCard = computer.playCard(computer.handSize() - 1);
                     handlePlayedCard(playedCard);
+                    // If skipNextTurn is true after handling the card effect, player gets another turn
+                    // Otherwise, switch to player's turn normally
                     if (!skipNextTurn) {
                         playerTurn = true;
+                    } else {
+                        // If computer played a skip card, the player's turn is skipped
+                        // and the computer gets another turn
+                        playerTurn = false;
+                        message = "Your turn was skipped!";
+                        skipNextTurn = false; // Reset the flag
                     }
                     message = "Computer drew and played " + playedCard.getColor() + 
                              (playedCard.isSpecial() ? " special card" : " " + playedCard.getValue());
@@ -177,7 +202,6 @@ public class PlayState extends GameState {
             messageTimer = 60;
         }
         
-        skipNextTurn = false;
         updateCardBounds();
     }
 
@@ -202,10 +226,9 @@ public class PlayState extends GameState {
                 messageTimer = 60;
                 
                 // Special handling for specific effects
-                if (effect instanceof SkipTurnEffect || effect instanceof ReverseDirectionEffect) {
-                    // For skip and reverse in 2-player game, current player goes again
-                    playerTurn = !playerTurn;
-                }
+                // In a 2-player game, skip and reverse have the same effect (opponent skips turn)
+                // But we don't need to handle it here as the effect.apply() already sets skipNextTurn
+                // which is handled during turn transitions
                 
                 // Special handling for wild card
                 if (effect instanceof WildCardEffect) {
@@ -403,7 +426,19 @@ public class PlayState extends GameState {
                     if (selectedCard.matches(topCard)) {
                         Card played = player.playCard(i);
                         handlePlayedCard(played);
-                        playerTurn = false;
+                        
+                        // Check if the computer's turn should be skipped after card effect
+                        if (skipNextTurn) {
+                            // If player played a skip card, the computer's turn is skipped
+                            // and the player gets another turn
+                            playerTurn = true;
+                            message = "Computer's turn was skipped!";
+                            skipNextTurn = false; // Reset the flag
+                        } else {
+                            // Normal turn transition
+                            playerTurn = false;
+                        }
+                        
                         updateCardBounds();
                         message = "You played " + played.getColor() + 
                                  (played.isSpecial() ? " special card" : " " + played.getValue());
@@ -432,5 +467,22 @@ public class PlayState extends GameState {
     @Override
     public void onExit() {
         // Nothing special needed
+    }
+    
+    /**
+     * Sets the flag to skip the next player's turn
+     * In a 2-player game, this means the current player gets another turn
+     */
+    public void skipNextTurn() {
+        this.skipNextTurn = true;
+    }
+    
+    /**
+     * Reverses the direction of play
+     * In a 2-player game, this effectively skips the next player's turn
+     */
+    public void reverseDirection() {
+        // In a 2-player game, reversing direction is equivalent to skipping a turn
+        this.skipNextTurn = true;
     }
 }
