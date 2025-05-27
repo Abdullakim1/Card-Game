@@ -138,6 +138,27 @@ public class PlayState extends GameState {
         messageTimer = 60;
         updateCardBounds();
     }
+    
+    /**
+     * Skips the next player's turn
+     */
+    private void skipNextTurn() {
+        // Skip the next player by advancing twice
+        currentPlayerIndex = (currentPlayerIndex + direction + players.size()) % players.size();
+        currentPlayerIndex = (currentPlayerIndex + direction + players.size()) % players.size();
+        message = "Skipped " + players.get((currentPlayerIndex - direction + players.size()) % players.size()).getName() + "'s turn!";
+        messageTimer = 60;
+        updateCardBounds();
+    }
+    
+    /**
+     * Reverses the direction of play
+     */
+    private void reverseDirection() {
+        direction *= -1; // Flip between 1 and -1
+        message = "Direction reversed!";
+        messageTimer = 60;
+    }
 
     @Override
     public void tick() {
@@ -302,9 +323,18 @@ public class PlayState extends GameState {
                     // Skip next player's turn
                     message = "Skip next player's turn!";
                     messageTimer = 60;
-                    // Skip the next player by advancing twice
-                    nextPlayer();
-                    return; // Exit early to prevent the normal nextPlayer() call at the end
+                    
+                    if (players.size() == 2) {
+                        // In a 2-player game, skip means the current player gets another turn
+                        // So we don't call nextPlayer() at all
+                        message = getCurrentPlayer().getName() + " gets another turn!";
+                        messageTimer = 60;
+                        return; // Exit early to prevent the normal nextPlayer() call at the end
+                    } else {
+                        // Skip the next player by advancing twice
+                        nextPlayer();
+                        return; // Exit early to prevent the normal nextPlayer() call at the end
+                    }
                 }
                 case BLUE: {
                     // Next player draws two cards
@@ -320,6 +350,14 @@ public class PlayState extends GameState {
                     direction *= -1; // Flip between 1 and -1
                     message = "Reverse! Direction changed!";
                     messageTimer = 60;
+                    
+                    if (players.size() == 2) {
+                        // In a 2-player game, reverse acts like skip
+                        // Current player gets another turn
+                        message = getCurrentPlayer().getName() + " gets another turn!";
+                        messageTimer = 60;
+                        return; // Exit early to prevent the normal nextPlayer() call at the end
+                    }
                     break;
                 }
                 case GOLD: {
