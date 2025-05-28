@@ -262,13 +262,13 @@ public class PlayState extends GameState {
         // Check for game over
         if (player.handSize() == 0) {
             gameOver = true;
-            winner = "Player";
-            message = "Congratulations! You win!";
+            winner = player.getName();
+            message = "Game Over! " + player.getName() + " wins!";
             messageTimer = Integer.MAX_VALUE;
         } else if (computer.handSize() == 0) {
             gameOver = true;
-            winner = "Computer";
-            message = "Game Over! Computer wins!";
+            winner = computer.getName();
+            message = "Game Over! " + computer.getName() + " wins!";
             messageTimer = Integer.MAX_VALUE;
         }
     }
@@ -303,7 +303,7 @@ public class PlayState extends GameState {
             
             // Draw final score
             g.setFont(new Font("Arial", Font.PLAIN, 24));
-            String scoreText = "Final Score - Player: " + (7 - player.handSize()) + " | Computer: " + (7 - computer.handSize());
+            String scoreText = "Final Score - " + player.getName() + ": " + (7 - player.handSize()) + " | " + computer.getName() + ": " + (7 - computer.handSize());
             fm = g.getFontMetrics();
             textX = (800 - fm.stringWidth(scoreText)) / 2;
             g.drawString(scoreText, textX, 340);
@@ -359,13 +359,13 @@ public class PlayState extends GameState {
         // Draw turn indicator
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 24));
-        String turnText = playerTurn ? "Your Turn" : "Computer's Turn";
+        String turnText = playerTurn ? player.getName() + "'s Turn" : computer.getName() + "'s Turn";
         g.drawString(turnText, 20, 30);
 
         // Draw card counts
         g.setFont(new Font("Arial", Font.PLAIN, 18));
-        g.drawString("Your Cards: " + player.handSize(), 20, 550);
-        g.drawString("Computer's Cards: " + computer.handSize(), 20, 80);
+        g.drawString(player.getName() + "'s Cards: " + player.handSize(), 20, 550);
+        g.drawString(computer.getName() + "'s Cards: " + computer.handSize(), 20, 80);
         g.drawString("Deck: " + deck.remainingCards(), 650, 180);
     }
 

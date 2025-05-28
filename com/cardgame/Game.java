@@ -3,10 +3,14 @@ package com.cardgame;
 import com.cardgame.controller.states.GameState;
 import com.cardgame.controller.states.MenuState;
 import com.cardgame.view.animations.CardAnimation;
+import com.cardgame.controller.states.SinglePlayerNameState;
+import com.cardgame.controller.states.PlayerSelectionState;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -14,7 +18,7 @@ import java.awt.image.BufferStrategy;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Game extends JFrame implements Runnable {
+public class Game extends JFrame implements Runnable, KeyListener {
     private static final int WIDTH = 800;
     private static final int HEIGHT = 600;
     private static final String TITLE = "Card Game";
@@ -80,6 +84,11 @@ public class Game extends JFrame implements Runnable {
                 }
             }
         });
+        
+        // Add keyboard listener
+        addKeyListener(this);
+        setFocusable(true);
+        requestFocus();
 
         // Start with menu state
         setState(new MenuState(this));
@@ -197,6 +206,27 @@ public class Game extends JFrame implements Runnable {
         SwingUtilities.invokeLater(action);
     }
 
+    // KeyListener methods
+    @Override
+    public void keyTyped(KeyEvent e) {
+        // Pass key events to the current state if it can handle them
+        if (currentState instanceof SinglePlayerNameState) {
+            ((SinglePlayerNameState) currentState).processKeyEvent(e);
+        } else if (currentState instanceof PlayerSelectionState) {
+            ((PlayerSelectionState) currentState).processKeyEvent(e);
+        }
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        // Not used for text input, but could be used for other controls
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        // Not used for text input, but could be used for other controls
+    }
+    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             Game game = new Game();
