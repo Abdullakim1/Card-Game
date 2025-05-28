@@ -7,9 +7,11 @@ import java.awt.event.MouseEvent;
 
 public class MenuState extends GameState {
     private ModernButton playButton;
+    private ModernButton humanPlayButton;
     private ModernButton rulesButton;
     private ModernButton exitButton;
     private Rectangle playBounds;
+    private Rectangle humanPlayBounds;
     private Rectangle rulesBounds;
     private Rectangle exitBounds;
 
@@ -22,15 +24,17 @@ public class MenuState extends GameState {
         // Calculate button positions based on window size
         int buttonWidth = 200;
         int buttonHeight = 50;
-        int startY = 250;
-        int spacing = 70;
+        int startY = 220;
+        int spacing = 60;
         int centerX = (800 - buttonWidth) / 2;
 
         playBounds = new Rectangle(centerX, startY, buttonWidth, buttonHeight);
-        rulesBounds = new Rectangle(centerX, startY + spacing, buttonWidth, buttonHeight);
-        exitBounds = new Rectangle(centerX, startY + spacing * 2, buttonWidth, buttonHeight);
+        humanPlayBounds = new Rectangle(centerX, startY + spacing, buttonWidth, buttonHeight);
+        rulesBounds = new Rectangle(centerX, startY + spacing * 2, buttonWidth, buttonHeight);
+        exitBounds = new Rectangle(centerX, startY + spacing * 3, buttonWidth, buttonHeight);
 
-        playButton = new ModernButton("Play Game");
+        playButton = new ModernButton("Play vs Computer");
+        humanPlayButton = new ModernButton("Play with Humans");
         rulesButton = new ModernButton("Rules");
         exitButton = new ModernButton("Exit");
     }
@@ -72,6 +76,7 @@ public class MenuState extends GameState {
 
         // Draw buttons with their current bounds
         playButton.render(g, playBounds.x, playBounds.y, playBounds.width, playBounds.height);
+        humanPlayButton.render(g, humanPlayBounds.x, humanPlayBounds.y, humanPlayBounds.width, humanPlayBounds.height);
         rulesButton.render(g, rulesBounds.x, rulesBounds.y, rulesBounds.width, rulesBounds.height);
         exitButton.render(g, exitBounds.x, exitBounds.y, exitBounds.width, exitBounds.height);
 
@@ -89,6 +94,7 @@ public class MenuState extends GameState {
         // Handle hover effects
         if (e.getID() == MouseEvent.MOUSE_MOVED) {
             playButton.setHovered(playBounds.contains(mouse));
+            humanPlayButton.setHovered(humanPlayBounds.contains(mouse));
             rulesButton.setHovered(rulesBounds.contains(mouse));
             exitButton.setHovered(exitBounds.contains(mouse));
             return;
@@ -98,6 +104,8 @@ public class MenuState extends GameState {
         if (e.getID() == MouseEvent.MOUSE_PRESSED) {
             if (playBounds.contains(mouse)) {
                 playButton.setPressed(true);
+            } else if (humanPlayBounds.contains(mouse)) {
+                humanPlayButton.setPressed(true);
             } else if (rulesBounds.contains(mouse)) {
                 rulesButton.setPressed(true);
             } else if (exitBounds.contains(mouse)) {
@@ -110,12 +118,19 @@ public class MenuState extends GameState {
         if (e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
             // Reset pressed states
             playButton.setPressed(false);
+            humanPlayButton.setPressed(false);
             rulesButton.setPressed(false);
             exitButton.setPressed(false);
 
             // Handle button actions
             if (playBounds.contains(mouse)) {
-                getGame().setState(new PlayState(getGame()));
+                // Redirect to single player name entry for vs Computer mode
+                getGame().setState(new SinglePlayerNameState(getGame()));
+            } else if (humanPlayBounds.contains(mouse)) {
+                // Human-only multiplayer mode
+                PlayerSelectionState state = new PlayerSelectionState(getGame());
+                state.setIncludeComputer(false);
+                getGame().setState(state);
             } else if (rulesBounds.contains(mouse)) {
                 getGame().setState(new RulesState(getGame()));
             } else if (exitBounds.contains(mouse)) {
@@ -129,6 +144,8 @@ public class MenuState extends GameState {
         // Reset button states when entering menu
         playButton.setHovered(false);
         playButton.setPressed(false);
+        humanPlayButton.setHovered(false);
+        humanPlayButton.setPressed(false);
         rulesButton.setHovered(false);
         rulesButton.setPressed(false);
         exitButton.setHovered(false);

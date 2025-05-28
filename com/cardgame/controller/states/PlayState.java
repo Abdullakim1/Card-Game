@@ -9,6 +9,7 @@ import com.cardgame.view.components.ModernButton;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -35,15 +36,51 @@ public class PlayState extends GameState {
         super(game);
         initializeGame();
     }
+    
+    /**
+     * Creates a new play state with specified player names and computer player option
+     * 
+     * @param game The game instance
+     * @param playerNames List of player names
+     * @param includeComputer Whether to include a computer player
+     */
+    public PlayState(Game game, List<String> playerNames, boolean includeComputer) {
+        super(game);
+        initializeGame(playerNames, includeComputer);
+    }
 
     private void initializeGame() {
+        List<String> defaultNames = new ArrayList<>();
+        defaultNames.add("Player");
+        initializeGame(defaultNames, true);
+    }
+    
+    /**
+     * Initializes the game with specified player names and computer player option
+     * 
+     * @param playerNames List of player names
+     * @param includeComputer Whether to include a computer player
+     */
+    private void initializeGame(List<String> playerNames, boolean includeComputer) {
         deck = new Deck();
-        player = new Player("Player", false);
-        computer = new Player("Computer", true);
         
-        // Deal 7 cards to each player
-        player.addCards(deck.draw(7));
-        computer.addCards(deck.draw(7));
+        if (includeComputer) {
+            // Single player vs computer mode
+            player = new Player(playerNames.get(0), false);
+            computer = new Player("Computer", true);
+            
+            // Deal 7 cards to each player
+            player.addCards(deck.draw(7));
+            computer.addCards(deck.draw(7));
+        } else {
+            // Human vs human mode
+            player = new Player(playerNames.get(0), false);
+            computer = new Player(playerNames.size() > 1 ? playerNames.get(1) : "Player 2", false);
+            
+            // Deal 7 cards to each player
+            player.addCards(deck.draw(7));
+            computer.addCards(deck.draw(7));
+        }
         
         // Place first card face up
         topCard = deck.draw();
