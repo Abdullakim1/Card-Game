@@ -9,9 +9,11 @@ import com.cardgame.view.components.ModernButton;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import com.cardgame.model.game.GameOutcome;
 
 public class PlayState extends GameState {
     private Player player;
@@ -31,6 +33,11 @@ public class PlayState extends GameState {
     private Rectangle[] cardBounds;
     private String message;
     private int messageTimer;
+    
+    // Game outcome animation
+    private boolean showOutcomeAnimation;
+    private BufferedImage outcomeImage;
+    private boolean outcomeInitialized = false;
 
     public PlayState(Game game) {
         super(game);
@@ -63,6 +70,21 @@ public class PlayState extends GameState {
      */
     private void initializeGame(List<String> playerNames, boolean includeComputer) {
         deck = new Deck();
+        
+        // Initialize animation variables
+        showOutcomeAnimation = false;
+        outcomeImage = null;
+        outcomeInitialized = false;
+        
+        // Load the outcome animations
+        try {
+            GameOutcome.loadOutcomeImages();
+            outcomeInitialized = true;
+            System.out.println("GameOutcome animations loaded successfully");
+        } catch (Exception e) {
+            System.err.println("Error loading GameOutcome animations: " + e.getMessage());
+            e.printStackTrace();
+        }
         
         if (includeComputer) {
             // Single player vs computer mode
@@ -124,8 +146,24 @@ public class PlayState extends GameState {
 
     @Override
     public void tick() {
+        // Update message timer
         if (messageTimer > 0) {
             messageTimer--;
+        }
+        
+        // Update outcome animation if active
+        if (showOutcomeAnimation && gameOver) {
+            try {
+                outcomeImage = GameOutcome.getRandomOutcomeImage();
+                if (outcomeImage != null) {
+                    System.out.println("Animation frame updated: " + outcomeImage.getWidth() + "x" + outcomeImage.getHeight());
+                } else {
+                    System.out.println("Warning: Animation frame is null");
+                }
+            } catch (Exception e) {
+                System.err.println("Error updating animation: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
 
         // Handle computer's turn
@@ -265,11 +303,33 @@ public class PlayState extends GameState {
             winner = player.getName();
             message = "Game Over! " + player.getName() + " wins!";
             messageTimer = Integer.MAX_VALUE;
+            
+            // Always show animation when the human player wins
+            showOutcomeAnimation = true;
+            try {
+                GameOutcome.resetAnimation();
+                System.out.println("Animation started for player win: " + player.getName());
+                System.out.println("Is computer player: " + player.isComputer());
+            } catch (Exception e) {
+                System.err.println("Error starting animation: " + e.getMessage());
+                e.printStackTrace();
+            }
         } else if (computer.handSize() == 0) {
             gameOver = true;
             winner = computer.getName();
             message = "Game Over! " + computer.getName() + " wins!";
             messageTimer = Integer.MAX_VALUE;
+            
+            // Always show animation when the computer wins
+            showOutcomeAnimation = true;
+            try {
+                GameOutcome.resetAnimation();
+                System.out.println("Animation started for computer win: " + computer.getName());
+                System.out.println("Is computer: " + computer.isComputer());
+            } catch (Exception e) {
+                System.err.println("Error starting animation: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 
@@ -281,6 +341,46 @@ public class PlayState extends GameState {
 
         if (gameOver) {
             // Draw game over screen
+            
+            // Draw outcome animation if active
+            if (showOutcomeAnimation) {
+                try {
+                    if (outcomeImage != null) {
+                        System.out.println("Drawing animation frame: " + outcomeImage.getWidth() + "x" + outcomeImage.getHeight());
+                        
+                        // Make the animation more prominent
+                        int x = (800 - outcomeImage.getWidth()) / 2;
+                        int y = 300; // Move it higher up
+                        
+                        // Draw a border around the animation to make it stand out
+                        g.setColor(new Color(255, 215, 0)); // Gold border
+                        g.fillRect(x - 10, y - 10, outcomeImage.getWidth() + 20, outcomeImage.getHeight() + 20);
+                        
+                        // Draw the animation
+                        g.drawImage(outcomeImage, x, y, null);
+                        
+                        // Draw a label for the animation
+                        g.setColor(Color.RED);
+                        g.setFont(new Font("Arial", Font.BOLD, 20));
+                        g.drawString("PUNISHMENT FOR LOSING:", x, y - 15);
+                    } else {
+                        // If outcomeImage is null, draw a placeholder
+                        g.setColor(Color.RED);
+                        g.setFont(new Font("Arial", Font.BOLD, 24));
+                        g.drawString("PUNISHMENT LOADING...", 300, 350);
+                        System.out.println("Drawing placeholder for null animation");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error rendering animation: " + e.getMessage());
+                    e.printStackTrace();
+                    
+                    // Draw error message if animation fails
+                    g.setColor(Color.RED);
+                    g.setFont(new Font("Arial", Font.BOLD, 16));
+                    g.drawString("Animation Error: " + e.getMessage(), 250, 350);
+                }
+            }
+            
             g.setFont(new Font("Arial", Font.BOLD, 48));
             FontMetrics fm = g.getFontMetrics();
             String gameOverText = "Game Over!";
