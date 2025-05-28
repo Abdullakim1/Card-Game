@@ -2,6 +2,7 @@ package com.cardgame.model.player;
 
 import com.cardgame.model.card.Card;
 import com.cardgame.model.card.Card.CardColor;
+import com.cardgame.model.card.Deck;
 import java.util.*;
 
 public class Player {

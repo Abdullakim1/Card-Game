@@ -15,7 +15,7 @@ public abstract class GameState {
     }
     
     // Getter method to provide controlled access to the game field
-    protected Game getGame() {
+    public Game getGame() {
         return game;
     }
 
