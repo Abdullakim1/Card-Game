@@ -199,7 +199,20 @@ public class PlayState extends GameState {
             }
         }
 
-        // Second priority: Block player from winning or counter their advantage
+        // Second priority: Play a skip or reverse card if available
+        if (playIndex == -1) {
+            for (int i = 0; i < computerHand.size(); i++) {
+                Card card = computerHand.get(i);
+                if (card.matches(topCard) && card.isSpecial() && 
+                    (card.getColor() == CardColor.RED || card.getColor() == CardColor.GREEN)) {
+                    playedCard = card;
+                    playIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // Third priority: Block player from winning or counter their advantage
         if (playIndex == -1 && player.handSize() <= 2) {
             for (int i = 0; i < computerHand.size(); i++) {
                 Card card = computerHand.get(i);
@@ -211,7 +224,7 @@ public class PlayState extends GameState {
             }
         }
 
-        // Third priority: Play any matching card
+        // Fourth priority: Play any matching card
         if (playIndex == -1) {
             for (int i = 0; i < computerHand.size(); i++) {
                 Card card = computerHand.get(i);
@@ -226,12 +239,25 @@ public class PlayState extends GameState {
         if (playIndex != -1) {
             // Play the card
             playedCard = computer.playCard(playIndex);
+            
+            // Store the current player turn state before handling the card
+            boolean wasComputerTurn = !playerTurn;
+            
+            // Handle the played card
             handlePlayedCard(playedCard);
-            if (!skipNextTurn) {
-                playerTurn = true;
+            
+            // For special cards (RED skip or GREEN reverse), keep the turn with the computer
+            if (playedCard.isSpecial()) {
+                if (playedCard.getColor() == CardColor.RED || playedCard.getColor() == CardColor.GREEN) {
+                    playerTurn = false; // Keep computer's turn
+                    message = "Computer played " + playedCard.getColor() + " special card and gets another turn!";
+                } else {
+                    playerTurn = true; // Switch to player's turn for other special cards
+                }
+            } else {
+                playerTurn = true; // Switch to player's turn for normal cards
             }
-            message = "Computer played " + playedCard.getColor() +
-                     (playedCard.isSpecial() ? " special card" : " " + playedCard.getValue());
+            
             messageTimer = 60;
         } else {
             // Draw a card only if we have no playable cards
@@ -241,12 +267,24 @@ public class PlayState extends GameState {
                 // Check if drawn card can be played
                 if (drawnCard.matches(topCard)) {
                     playedCard = computer.playCard(computer.handSize() - 1);
+                    
+                    // Store the current player turn state before handling the card
+                    boolean wasComputerTurn = !playerTurn;
+                    
+                    // Handle the played card
                     handlePlayedCard(playedCard);
-                    if (!skipNextTurn) {
-                        playerTurn = true;
+                    
+                    // For special cards (RED skip or GREEN reverse), keep the turn with the computer
+                    if (playedCard.isSpecial()) {
+                        if (playedCard.getColor() == CardColor.RED || playedCard.getColor() == CardColor.GREEN) {
+                            playerTurn = false; // Keep computer's turn
+                            message = "Computer drew and played " + playedCard.getColor() + " special card and gets another turn!";
+                        } else {
+                            playerTurn = true; // Switch to player's turn for other special cards
+                        }
+                    } else {
+                        playerTurn = true; // Switch to player's turn for normal cards
                     }
-                    message = "Computer drew and played " + playedCard.getColor() + 
-                             (playedCard.isSpecial() ? " special card" : " " + playedCard.getValue());
                 } else {
                     message = "Computer drew a card";
                     playerTurn = true;
@@ -258,7 +296,6 @@ public class PlayState extends GameState {
             messageTimer = 60;
         }
         
-        skipNextTurn = false;
         updateCardBounds();
     }
 
@@ -276,25 +313,34 @@ public class PlayState extends GameState {
         if (played.isSpecial()) {
             switch (played.getColor()) {
                 case RED -> {
-                    skipNextTurn = true;
-                    message = "Skip turn!";
+                    // RED = Skip card - player who played this gets another turn
+                    message = playerTurn ? 
+                        "Skip! " + computer.getName() + "'s turn skipped! You get another turn!" : 
+                        "Skip! " + player.getName() + "'s turn skipped! Computer gets another turn!";
                     messageTimer = 60;
-                    // Skip turn means current player goes again
-                    playerTurn = !playerTurn;
+                    
+                    // Don't change playerTurn - the current player gets another turn
+                    // This is handled by keeping the current playerTurn value
                 }
                 case BLUE -> {
+                    // BLUE = Draw 2 cards
                     Player target = playerTurn ? computer : player;
                     target.addCards(deck.draw(2));
-                    message = "Draw 2 cards!";
+                    message = target.getName() + " draws 2 cards!";
                     messageTimer = 60;
                 }
                 case GREEN -> {
-                    message = "Reverse! Your turn again!";
+                    // GREEN = Reverse direction - player who played this gets another turn
+                    message = playerTurn ? 
+                        "Reverse! Direction changed! You get another turn!" : 
+                        "Reverse! Direction changed! Computer gets another turn!";
                     messageTimer = 60;
-                    // Reverse in 2-player game means current player goes again
-                    playerTurn = !playerTurn;
+                    
+                    // Don't change playerTurn - the current player gets another turn
+                    // This is handled by keeping the current playerTurn value
                 }
                 case GOLD -> {
+                    // GOLD = Wild card
                     message = "Wild card played!";
                     messageTimer = 60;
                 }
@@ -501,52 +547,25 @@ public class PlayState extends GameState {
             // Handle game over screen interactions
             if (e.getID() == MouseEvent.MOUSE_MOVED) {
                 backToMenuButton.setHovered(backToMenuBounds.contains(mouse));
-                return;
+            } else if (e.getID() == MouseEvent.MOUSE_CLICKED && backToMenuBounds.contains(mouse)) {
+                getGame().setState(new MenuState(getGame()));
             }
-
-            if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-                if (backToMenuBounds.contains(mouse)) {
-                    backToMenuButton.setPressed(true);
-                }
-                return;
-            }
-
-            if (e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
-                if (backToMenuBounds.contains(mouse)) {
-                    getGame().setState(new MenuState(getGame()));
-                }
-                return;
-            }
+            return;
         }
-
-        // Only handle player interactions during their turn
+        
+        // Only handle events during player's turn
         if (!playerTurn) return;
-
+        
+        // Handle hover effects
         if (e.getID() == MouseEvent.MOUSE_MOVED) {
             drawButton.setHovered(drawBounds.contains(mouse));
             backToMenuButton.setHovered(backToMenuBounds.contains(mouse));
             return;
         }
 
-        if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-            if (drawBounds.contains(mouse)) {
-                drawButton.setPressed(true);
-            } else if (backToMenuBounds.contains(mouse)) {
-                backToMenuButton.setPressed(true);
-            }
-            return;
-        }
-
-        if (e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
-            // Reset pressed states
-            drawButton.setPressed(false);
-            backToMenuButton.setPressed(false);
-
-            if (backToMenuBounds.contains(mouse)) {
-                getGame().setState(new MenuState(getGame()));
-                return;
-            }
-
+        // Handle clicks
+        if (e.getID() == MouseEvent.MOUSE_CLICKED) {
+            // Check if draw button was clicked
             if (drawBounds.contains(mouse)) {
                 Card drawnCard = deck.draw();
                 if (drawnCard != null) {
@@ -561,19 +580,33 @@ public class PlayState extends GameState {
                 }
                 return;
             }
-
-            // Handle card clicks
-            List<Card> playerHand = player.getHand();
-            for (int i = 0; i < cardBounds.length && i < playerHand.size(); i++) {
+            
+            // Check if back to menu button was clicked
+            if (backToMenuBounds.contains(mouse)) {
+                getGame().setState(new MenuState(getGame()));
+                return;
+            }
+            
+            // Check if a card was clicked
+            for (int i = 0; i < cardBounds.length && i < player.getHand().size(); i++) {
                 if (cardBounds[i].contains(mouse)) {
-                    Card selectedCard = playerHand.get(i);
+                    // Try to play the card
+                    Card selectedCard = player.getHand().get(i);
                     if (selectedCard.matches(topCard)) {
-                        Card played = player.playCard(i);
-                        handlePlayedCard(played);
-                        playerTurn = false;
+                        Card playedCard = player.playCard(i);
+                        handlePlayedCard(playedCard);
+                        
+                        // For special cards (RED skip or GREEN reverse), keep the turn with the player
+                        if (playedCard.isSpecial() && 
+                            (playedCard.getColor() == CardColor.RED || playedCard.getColor() == CardColor.GREEN)) {
+                            playerTurn = true; // Player gets another turn
+                        } else {
+                            playerTurn = false; // Switch to computer's turn for other cards
+                        }
+                        
                         updateCardBounds();
-                        message = "You played " + played.getColor() +
-                                (played.isSpecial() ? " special card" : " " + played.getValue());
+                        message = "You played " + playedCard.getColor() +
+                                (playedCard.isSpecial() ? " special card" : " " + playedCard.getValue());
                         messageTimer = 60;
                     } else {
                         message = "Card doesn't match! Match the color or number.";
@@ -607,6 +640,10 @@ public class PlayState extends GameState {
         directionClockwise = !directionClockwise;
         message = "Direction reversed!";
         messageTimer = 120;
+        
+        // Note: We don't change playerTurn here anymore
+        // The player who played the reverse card gets another turn
+        // This is handled in the handlePlayedCard method
     }
     
     /**
@@ -624,6 +661,10 @@ public class PlayState extends GameState {
         skipNextTurn = true;
         message = "Next turn skipped!";
         messageTimer = 120;
+        
+        // Note: We don't change playerTurn here anymore
+        // The player who played the skip card gets another turn
+        // This is handled in the handlePlayedCard method
     }
     
     /**
