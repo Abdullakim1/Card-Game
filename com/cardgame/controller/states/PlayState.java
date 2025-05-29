@@ -123,20 +123,24 @@ public class PlayState extends GameState {
         
         // Initialize UI elements
         drawButton = new ModernButton("Draw Card");
-        drawBounds = new Rectangle(650, 400, 120, 40);
+        drawBounds = new Rectangle(0, 0, 120, 40);
         backToMenuButton = new ModernButton("Back to Menu");
-        backToMenuBounds = new Rectangle(650, 500, 120, 40);
+        backToMenuBounds = new Rectangle(0, 0, 120, 40);
         cardBounds = new Rectangle[7]; // Initial size for 7 cards
         updateCardBounds();
     }
 
     private void updateCardBounds() {
+        // Get current window dimensions
+        int windowWidth = getGame().getWidth();
+        int windowHeight = getGame().getHeight();
+        
         List<Card> playerHand = player.getHand();
         int cardWidth = 80;
         int cardHeight = 120;
         int spacing = 20;
-        int startX = (800 - (playerHand.size() * (cardWidth + spacing) - spacing)) / 2;
-        int y = 400;
+        int startX = (windowWidth - (playerHand.size() * (cardWidth + spacing) - spacing)) / 2;
+        int y = windowHeight - 200;
 
         cardBounds = new Rectangle[playerHand.size()];
         for (int i = 0; i < playerHand.size(); i++) {
@@ -226,7 +230,7 @@ public class PlayState extends GameState {
             if (!skipNextTurn) {
                 playerTurn = true;
             }
-            message = "Computer played " + playedCard.getColor() + 
+            message = "Computer played " + playedCard.getColor() +
                      (playedCard.isSpecial() ? " special card" : " " + playedCard.getValue());
             messageTimer = 60;
         } else {
@@ -335,9 +339,19 @@ public class PlayState extends GameState {
 
     @Override
     public void render(Graphics g) {
+        // Get current window dimensions
+        int windowWidth = getGame().getWidth();
+        int windowHeight = getGame().getHeight();
+        
+        // Update UI element positions
+        updateCardBounds();
+        int rightMargin = windowWidth - 150;
+        drawBounds.setBounds(rightMargin, windowHeight - 200, 120, 40);
+        backToMenuBounds.setBounds(rightMargin, windowHeight - 100, 120, 40);
+        
         // Draw background
         g.setColor(new Color(40, 44, 52));
-        g.fillRect(0, 0, 800, 600);
+        g.fillRect(0, 0, windowWidth, windowHeight);
 
         if (gameOver) {
             // Draw game over screen
@@ -349,8 +363,8 @@ public class PlayState extends GameState {
                         System.out.println("Drawing animation frame: " + outcomeImage.getWidth() + "x" + outcomeImage.getHeight());
                         
                         // Make the animation more prominent
-                        int x = (800 - outcomeImage.getWidth()) / 2;
-                        int y = 300; // Move it higher up
+                        int x = (windowWidth - outcomeImage.getWidth()) / 2;
+                        int y = windowHeight / 2; // Center vertically
                         
                         // Draw a border around the animation to make it stand out
                         g.setColor(new Color(255, 215, 0)); // Gold border
@@ -384,7 +398,7 @@ public class PlayState extends GameState {
             g.setFont(new Font("Arial", Font.BOLD, 48));
             FontMetrics fm = g.getFontMetrics();
             String gameOverText = "Game Over!";
-            int textX = (800 - fm.stringWidth(gameOverText)) / 2;
+            int textX = (windowWidth - fm.stringWidth(gameOverText)) / 2;
             
             // Draw text shadow
             g.setColor(new Color(0, 0, 0, 100));
@@ -398,36 +412,43 @@ public class PlayState extends GameState {
             g.setFont(new Font("Arial", Font.BOLD, 32));
             fm = g.getFontMetrics();
             String winnerText = winner + " Wins!";
-            textX = (800 - fm.stringWidth(winnerText)) / 2;
+            textX = (windowWidth - fm.stringWidth(winnerText)) / 2;
             g.drawString(winnerText, textX, 280);
             
             // Draw final score
             g.setFont(new Font("Arial", Font.PLAIN, 24));
             String scoreText = "Final Score - " + player.getName() + ": " + (7 - player.handSize()) + " | " + computer.getName() + ": " + (7 - computer.handSize());
             fm = g.getFontMetrics();
-            textX = (800 - fm.stringWidth(scoreText)) / 2;
+            textX = (windowWidth - fm.stringWidth(scoreText)) / 2;
             g.drawString(scoreText, textX, 340);
             
-            // Draw back to menu button
+            // Draw back to menu button centered at the bottom
+            int buttonX = (windowWidth - backToMenuBounds.width) / 2;
+            int buttonY = windowHeight - 100;
+            backToMenuBounds.setBounds(buttonX, buttonY, backToMenuBounds.width, backToMenuBounds.height);
             backToMenuButton.render(g, backToMenuBounds.x, backToMenuBounds.y, backToMenuBounds.width, backToMenuBounds.height);
             return;
         }
 
         // Draw deck
         g.setColor(new Color(30, 34, 42));
-        g.fillRoundRect(650, 200, 80, 120, 10, 10);
+        g.fillRoundRect(windowWidth - 100, windowHeight - 250, 80, 120, 10, 10);
 
         // Draw top card
         if (topCard != null) {
-            topCard.render(g, 550, 200, 80, 120);
+            topCard.render(g, windowWidth / 2 - 40, windowHeight / 2 - 60, 80, 120);
         }
 
         // Draw computer's cards face down
         List<Card> computerHand = computer.getHand();
-        int startX = (800 - (computerHand.size() * 100 - 20)) / 2;
+        int opponentCardWidth = 60;
+        int opponentCardHeight = 90;
+        int opponentSpacing = 15;
+        int opponentStartX = (windowWidth - (computerHand.size() * (opponentCardWidth + opponentSpacing) - opponentSpacing)) / 2;
+        int opponentY = 150;
         for (int i = 0; i < computerHand.size(); i++) {
             g.setColor(new Color(30, 34, 42));
-            g.fillRoundRect(startX + i * 100, 50, 80, 120, 10, 10);
+            g.fillRoundRect(opponentStartX + i * (opponentCardWidth + opponentSpacing), opponentY, opponentCardWidth, opponentCardHeight, 10, 10);
         }
 
         // Draw player's cards
@@ -447,13 +468,15 @@ public class PlayState extends GameState {
 
         // Draw UI elements
         drawButton.render(g, drawBounds.x, drawBounds.y, drawBounds.width, drawBounds.height);
+        backToMenuButton.render(g, backToMenuBounds.x, backToMenuBounds.y, backToMenuBounds.width, backToMenuBounds.height);
 
         // Draw message
         if (messageTimer > 0) {
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 20));
+            g.setFont(new Font("Arial", Font.BOLD, 18));
+            g.setColor(Color.YELLOW);
             FontMetrics fm = g.getFontMetrics();
-            g.drawString(message, (800 - fm.stringWidth(message)) / 2, 300);
+            int messageX = (windowWidth - fm.stringWidth(message)) / 2;
+            g.drawString(message, messageX, windowHeight / 2 - 100);
         }
 
         // Draw turn indicator
@@ -462,11 +485,12 @@ public class PlayState extends GameState {
         String turnText = playerTurn ? player.getName() + "'s Turn" : computer.getName() + "'s Turn";
         g.drawString(turnText, 20, 30);
 
-        // Draw card counts
-        g.setFont(new Font("Arial", Font.PLAIN, 18));
-        g.drawString(player.getName() + "'s Cards: " + player.handSize(), 20, 550);
+        // Draw player name and hand count
+        g.setFont(new Font("Arial", Font.BOLD, 20));
+        g.setColor(Color.WHITE);
+        g.drawString(player.getName() + "'s Hand " + player.handSize() + " cards", 50, windowHeight - 220);
         g.drawString(computer.getName() + "'s Cards: " + computer.handSize(), 20, 80);
-        g.drawString("Deck: " + deck.remainingCards(), 650, 180);
+        g.drawString("Deck: " + deck.remainingCards(), windowWidth - 100, 180);
     }
 
     @Override

@@ -32,14 +32,11 @@ public class SinglePlayerNameState extends GameState {
         // Calculate button positions
         int buttonWidth = 200;
         int buttonHeight = 50;
-        int centerX = (800 - buttonWidth) / 2;
         
-        // Name field
-        nameFieldBounds = new Rectangle(centerX, 200, buttonWidth, 45);
-        
-        // Buttons
-        startGameBounds = new Rectangle(centerX, 280, buttonWidth, buttonHeight);
-        backBounds = new Rectangle(centerX, 350, buttonWidth, buttonHeight);
+        // These will be updated in render() to use actual window dimensions
+        nameFieldBounds = new Rectangle(0, 0, buttonWidth, 45);
+        startGameBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
+        backBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
         
         startGameButton = new ModernButton("Start Game");
         backButton = new ModernButton("Back to Menu");
@@ -52,17 +49,34 @@ public class SinglePlayerNameState extends GameState {
     
     @Override
     public void render(Graphics g) {
+        // Get current window dimensions
+        int windowWidth = getGame().getWidth();
+        int windowHeight = getGame().getHeight();
+        
         // Draw background
         g.setColor(new Color(40, 44, 52));
-        g.fillRect(0, 0, 800, 600);
+        g.fillRect(0, 0, windowWidth, windowHeight);
         
         // Draw title
         g.setFont(new Font("Arial", Font.BOLD, 32));
         g.setColor(Color.WHITE);
         String title = "Enter Your Name";
         FontMetrics fm = g.getFontMetrics();
-        int titleX = (800 - fm.stringWidth(title)) / 2;
-        g.drawString(title, titleX, 120);
+        int titleX = (windowWidth - fm.stringWidth(title)) / 2;
+        int titleY = windowHeight / 5;
+        g.drawString(title, titleX, titleY);
+        
+        // Update positions based on current window size
+        int buttonWidth = 200;
+        int buttonHeight = 50;
+        int centerX = (windowWidth - buttonWidth) / 2;
+        int startY = titleY + 80;
+        int spacing = 70;
+        
+        // Update bounds
+        nameFieldBounds.setBounds(centerX, startY, buttonWidth, 45);
+        startGameBounds.setBounds(centerX, startY + spacing, buttonWidth, buttonHeight);
+        backBounds.setBounds(centerX, startY + spacing * 2, buttonWidth, buttonHeight);
         
         // Draw name field
         g.setColor(new Color(60, 64, 72));

@@ -33,9 +33,10 @@ public class Game extends JFrame implements Runnable, KeyListener {
 
     public Game() {
         setTitle(TITLE);
-        setSize(WIDTH, HEIGHT);
+        setMinimumSize(new Dimension(WIDTH, HEIGHT));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setResizable(false);
+        setResizable(true);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
 
         cardAnimation = new CardAnimation();

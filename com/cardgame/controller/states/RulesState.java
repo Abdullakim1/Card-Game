@@ -58,15 +58,16 @@ public class RulesState extends GameState {
     private void initializeComponents() {
         int buttonWidth = 150;
         int buttonHeight = 40;
-        int centerX = 50;
-        backBounds = new Rectangle(centerX, 500, buttonWidth, buttonHeight);
+        
+        // Initialize with dummy positions, will be updated in render
+        backBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
         backButton = new ModernButton("Back to Menu");
 
         // Add scroll buttons
         scrollUpButton = new ModernButton("▲");
         scrollDownButton = new ModernButton("▼");
-        scrollUpBounds = new Rectangle(740, 20, 30, 30);
-        scrollDownBounds = new Rectangle(740, 520, 30, 30);
+        scrollUpBounds = new Rectangle(0, 0, 30, 30);
+        scrollDownBounds = new Rectangle(0, 0, 30, 30);
     }
 
     @Override
@@ -76,24 +77,35 @@ public class RulesState extends GameState {
 
     @Override
     public void render(Graphics g) {
+        // Get current window dimensions
+        int windowWidth = getGame().getWidth();
+        int windowHeight = getGame().getHeight();
+        
+        // Update button positions based on window size
+        backBounds.setBounds(50, windowHeight - 100, backBounds.width, backBounds.height);
+        scrollUpBounds.setBounds(windowWidth - 60, 20, 30, 30);
+        scrollDownBounds.setBounds(windowWidth - 60, windowHeight - 80, 30, 30);
+        
         // Draw background with gradient
         Graphics2D g2d = (Graphics2D) g;
         GradientPaint gradient = new GradientPaint(
             0, 0, new Color(40, 44, 52),
-            0, 600, new Color(24, 26, 31)
+            0, windowHeight, new Color(24, 26, 31)
         );
         g2d.setPaint(gradient);
-        g2d.fillRect(0, 0, 800, 600);
+        g2d.fillRect(0, 0, windowWidth, windowHeight);
 
         // Create clipping region for scrolling
         Shape oldClip = g2d.getClip();
-        g2d.setClip(30, 20, 740, 560);
+        int contentWidth = windowWidth - 60;
+        int contentHeight = windowHeight - 40;
+        g2d.setClip(30, 20, contentWidth, contentHeight);
 
         // Draw semi-transparent overlay for better readability
         g2d.setColor(new Color(0, 0, 0, 128));
-        g2d.fillRect(30, 20, 740, 560);
+        g2d.fillRect(30, 20, contentWidth, contentHeight);
         g2d.setColor(new Color(255, 255, 255, 30));
-        g2d.drawRect(30, 20, 740, 560);
+        g2d.drawRect(30, 20, contentWidth, contentHeight);
 
         // Enable antialiasing for smoother text
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -103,7 +115,7 @@ public class RulesState extends GameState {
         g.setFont(new Font("Arial", Font.BOLD, 36));
         String title = rules[0];
         FontMetrics fm = g.getFontMetrics();
-        int titleX = (800 - fm.stringWidth(title)) / 2;
+        int titleX = (windowWidth - fm.stringWidth(title)) / 2;
         
         // Draw shadow
         g.setColor(new Color(0, 0, 0, 128));
@@ -114,7 +126,7 @@ public class RulesState extends GameState {
         g.drawString(title, titleX, 60);
 
         // Restore clip for scrolling content
-        g2d.setClip(30, 20, 740, 560);
+        g2d.setClip(30, 20, contentWidth, contentHeight);
 
         // Draw rules text with different colors for special cards
         g.setFont(new Font("Arial", Font.PLAIN, 16));
@@ -132,7 +144,7 @@ public class RulesState extends GameState {
             }
             
             // Only draw if within visible area
-            if (y >= 20 && y <= 580) {
+            if (y >= 20 && y <= windowHeight - 20) {
                 // Color special card rules and add visual emphasis
                 if (line.contains("RED")) {
                     g.setColor(new Color(220, 53, 69));

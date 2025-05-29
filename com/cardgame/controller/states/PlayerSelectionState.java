@@ -66,28 +66,32 @@ public class PlayerSelectionState extends GameState {
     private void initializeButtons() {
         int buttonWidth = 230;
         int buttonHeight = 50;
-        int centerX = (800 - buttonWidth) / 2;
         
+        // These will be updated in render() to use actual window dimensions
         addPlayerButton = new ModernButton("+ Add Player");
-        addPlayerBounds = new Rectangle(centerX, 350, buttonWidth, buttonHeight);
+        addPlayerBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
         
         startGameButton = new ModernButton("Start Game");
-        startGameBounds = new Rectangle(centerX, 420, buttonWidth, buttonHeight);
+        startGameBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
         
         backButton = new ModernButton("Back");
-        backBounds = new Rectangle(centerX, 490, buttonWidth, buttonHeight);
+        backBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
     }
     
     /**
      * Updates the bounds for player name fields and remove buttons.
      */
     private void updatePlayerBounds() {
+        // This method will be called from render() with current window dimensions
+        int windowWidth = getGame().getWidth();
+        int windowHeight = getGame().getHeight();
+        
         int fieldWidth = 230;
         int fieldHeight = 45;
         int removeButtonSize = 30;
         int spacing = 60;
-        int startY = 150;
-        int centerX = (800 - fieldWidth) / 2;
+        int startY = windowHeight / 5;
+        int centerX = (windowWidth - fieldWidth) / 2;
         
         playerNameBounds.clear();
         removePlayerBounds.clear();
@@ -100,9 +104,11 @@ public class PlayerSelectionState extends GameState {
         
         // Update button positions based on number of players
         int buttonY = startY + playerNames.size() * spacing + 20;
-        addPlayerBounds.y = buttonY;
-        startGameBounds.y = buttonY + 70;
-        backBounds.y = buttonY + 140;
+        int buttonCenterX = (windowWidth - addPlayerBounds.width) / 2;
+        
+        addPlayerBounds.setBounds(buttonCenterX, buttonY, addPlayerBounds.width, addPlayerBounds.height);
+        startGameBounds.setBounds(buttonCenterX, buttonY + 70, startGameBounds.width, startGameBounds.height);
+        backBounds.setBounds(buttonCenterX, buttonY + 140, backBounds.width, backBounds.height);
         
         // Disable add player button if max players reached
         addPlayerButton.setEnabled(playerNames.size() < MAX_PLAYERS);
@@ -177,21 +183,29 @@ public class PlayerSelectionState extends GameState {
     
     @Override
     public void render(Graphics g) {
+        // Get current window dimensions
+        int windowWidth = getGame().getWidth();
+        int windowHeight = getGame().getHeight();
+        
         // Draw background - solid dark color like in the image
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
         // Dark background (almost black)
         g2d.setColor(new Color(25, 26, 31));
-        g2d.fillRect(0, 0, 800, 600);
+        g2d.fillRect(0, 0, windowWidth, windowHeight);
+        
+        // Update player bounds with current window dimensions
+        updatePlayerBounds();
         
         // Draw title
         g.setFont(new Font("Arial", Font.BOLD, 36));
         g.setColor(Color.WHITE);
         String title = "Select Players";
         FontMetrics fm = g.getFontMetrics();
-        int titleX = (800 - fm.stringWidth(title)) / 2;
-        g.drawString(title, titleX, 80);
+        int titleX = (windowWidth - fm.stringWidth(title)) / 2;
+        int titleY = windowHeight / 8;
+        g.drawString(title, titleX, titleY);
         
         // Draw player name fields
         for (int i = 0; i < playerNames.size(); i++) {

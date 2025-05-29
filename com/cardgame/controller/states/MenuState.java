@@ -24,14 +24,13 @@ public class MenuState extends GameState {
         // Calculate button positions based on window size
         int buttonWidth = 200;
         int buttonHeight = 50;
-        int startY = 220;
         int spacing = 60;
-        int centerX = (800 - buttonWidth) / 2;
-
-        playBounds = new Rectangle(centerX, startY, buttonWidth, buttonHeight);
-        humanPlayBounds = new Rectangle(centerX, startY + spacing, buttonWidth, buttonHeight);
-        rulesBounds = new Rectangle(centerX, startY + spacing * 2, buttonWidth, buttonHeight);
-        exitBounds = new Rectangle(centerX, startY + spacing * 3, buttonWidth, buttonHeight);
+        
+        // These will be updated in render() to use actual window dimensions
+        playBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
+        humanPlayBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
+        rulesBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
+        exitBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
 
         playButton = new ModernButton("Play vs Computer");
         humanPlayButton = new ModernButton("Play with Humans");
@@ -46,21 +45,25 @@ public class MenuState extends GameState {
 
     @Override
     public void render(Graphics g) {
+        // Get current window dimensions
+        int windowWidth = getGame().getWidth();
+        int windowHeight = getGame().getHeight();
+        
         // Draw background gradient
         Graphics2D g2d = (Graphics2D) g;
         GradientPaint gradient = new GradientPaint(
             0, 0, new Color(40, 44, 52),
-            0, 600, new Color(24, 26, 31)
+            0, windowHeight, new Color(24, 26, 31)
         );
         g2d.setPaint(gradient);
-        g2d.fillRect(0, 0, 800, 600);
+        g2d.fillRect(0, 0, windowWidth, windowHeight);
 
         // Draw title with shadow
         g.setFont(new Font("Arial", Font.BOLD, 48));
         String title = "Card Game";
         FontMetrics fm = g.getFontMetrics();
-        int titleX = (800 - fm.stringWidth(title)) / 2;
-        int titleY = 150;
+        int titleX = (windowWidth - fm.stringWidth(title)) / 2;
+        int titleY = windowHeight / 4;
 
         // Draw shadow
         g.setColor(new Color(0, 0, 0, 100));
@@ -74,6 +77,19 @@ public class MenuState extends GameState {
         g2d.setStroke(new BasicStroke(2));
         g2d.drawLine(titleX, titleY + 10, titleX + fm.stringWidth(title), titleY + 10);
 
+        // Update button positions based on current window size
+        int buttonWidth = 200;
+        int buttonHeight = 50;
+        int startY = windowHeight / 3 + 50;
+        int spacing = 60;
+        int centerX = (windowWidth - buttonWidth) / 2;
+        
+        // Update button bounds
+        playBounds.setBounds(centerX, startY, buttonWidth, buttonHeight);
+        humanPlayBounds.setBounds(centerX, startY + spacing, buttonWidth, buttonHeight);
+        rulesBounds.setBounds(centerX, startY + spacing * 2, buttonWidth, buttonHeight);
+        exitBounds.setBounds(centerX, startY + spacing * 3, buttonWidth, buttonHeight);
+        
         // Draw buttons with their current bounds
         playButton.render(g, playBounds.x, playBounds.y, playBounds.width, playBounds.height);
         humanPlayButton.render(g, humanPlayBounds.x, humanPlayBounds.y, humanPlayBounds.width, humanPlayBounds.height);
@@ -84,7 +100,7 @@ public class MenuState extends GameState {
         g.setFont(new Font("Arial", Font.PLAIN, 12));
         g.setColor(new Color(200, 200, 200));
         String version = "Version 1.0";
-        g.drawString(version, 10, 580);
+        g.drawString(version, 10, windowHeight - 20);
     }
 
     @Override
