@@ -21,12 +21,10 @@ public class MenuState extends GameState {
     }
 
     private void initializeButtons() {
-        // Calculate button positions based on window size
         int buttonWidth = 200;
         int buttonHeight = 50;
         int spacing = 60;
         
-        // These will be updated in render() to use actual window dimensions
         playBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
         humanPlayBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
         rulesBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
@@ -40,16 +38,13 @@ public class MenuState extends GameState {
 
     @Override
     public void tick() {
-        // No continuous updates needed for menu
     }
 
     @Override
     public void render(Graphics g) {
-        // Get current window dimensions
         int windowWidth = getGame().getWidth();
         int windowHeight = getGame().getHeight();
         
-        // Draw background gradient
         Graphics2D g2d = (Graphics2D) g;
         GradientPaint gradient = new GradientPaint(
             0, 0, new Color(40, 44, 52),
@@ -58,45 +53,37 @@ public class MenuState extends GameState {
         g2d.setPaint(gradient);
         g2d.fillRect(0, 0, windowWidth, windowHeight);
 
-        // Draw title with shadow
         g.setFont(new Font("Arial", Font.BOLD, 48));
         String title = "Card Game";
         FontMetrics fm = g.getFontMetrics();
         int titleX = (windowWidth - fm.stringWidth(title)) / 2;
         int titleY = windowHeight / 4;
 
-        // Draw shadow
         g.setColor(new Color(0, 0, 0, 100));
         g.drawString(title, titleX + 2, titleY + 2);
 
-        // Draw title
         g.setColor(Color.WHITE);
         g.drawString(title, titleX, titleY);
 
-        // Draw decorative line under title
         g2d.setStroke(new BasicStroke(2));
         g2d.drawLine(titleX, titleY + 10, titleX + fm.stringWidth(title), titleY + 10);
 
-        // Update button positions based on current window size
         int buttonWidth = 200;
         int buttonHeight = 50;
         int startY = windowHeight / 3 + 50;
         int spacing = 60;
         int centerX = (windowWidth - buttonWidth) / 2;
         
-        // Update button bounds
         playBounds.setBounds(centerX, startY, buttonWidth, buttonHeight);
         humanPlayBounds.setBounds(centerX, startY + spacing, buttonWidth, buttonHeight);
         rulesBounds.setBounds(centerX, startY + spacing * 2, buttonWidth, buttonHeight);
         exitBounds.setBounds(centerX, startY + spacing * 3, buttonWidth, buttonHeight);
         
-        // Draw buttons with their current bounds
         playButton.render(g, playBounds.x, playBounds.y, playBounds.width, playBounds.height);
         humanPlayButton.render(g, humanPlayBounds.x, humanPlayBounds.y, humanPlayBounds.width, humanPlayBounds.height);
         rulesButton.render(g, rulesBounds.x, rulesBounds.y, rulesBounds.width, rulesBounds.height);
         exitButton.render(g, exitBounds.x, exitBounds.y, exitBounds.width, exitBounds.height);
 
-        // Draw version text
         g.setFont(new Font("Arial", Font.PLAIN, 12));
         g.setColor(new Color(200, 200, 200));
         String version = "Version 1.0";
@@ -107,7 +94,6 @@ public class MenuState extends GameState {
     public void handleMouseEvent(MouseEvent e) {
         Point mouse = e.getPoint();
 
-        // Handle hover effects
         if (e.getID() == MouseEvent.MOUSE_MOVED) {
             playButton.setHovered(playBounds.contains(mouse));
             humanPlayButton.setHovered(humanPlayBounds.contains(mouse));
@@ -116,7 +102,6 @@ public class MenuState extends GameState {
             return;
         }
 
-        // Handle button press effects
         if (e.getID() == MouseEvent.MOUSE_PRESSED) {
             if (playBounds.contains(mouse)) {
                 playButton.setPressed(true);
@@ -130,20 +115,15 @@ public class MenuState extends GameState {
             return;
         }
 
-        // Handle button release and click effects
         if (e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
-            // Reset pressed states
             playButton.setPressed(false);
             humanPlayButton.setPressed(false);
             rulesButton.setPressed(false);
             exitButton.setPressed(false);
 
-            // Handle button actions
             if (playBounds.contains(mouse)) {
-                // Redirect to single player name entry for vs Computer mode
                 getGame().setState(new SinglePlayerNameState(getGame()));
             } else if (humanPlayBounds.contains(mouse)) {
-                // Human-only multiplayer mode
                 PlayerSelectionState state = new PlayerSelectionState(getGame());
                 state.setIncludeComputer(false);
                 getGame().setState(state);
@@ -157,7 +137,6 @@ public class MenuState extends GameState {
 
     @Override
     public void onEnter() {
-        // Reset button states when entering menu
         playButton.setHovered(false);
         playButton.setPressed(false);
         humanPlayButton.setHovered(false);
@@ -170,6 +149,5 @@ public class MenuState extends GameState {
 
     @Override
     public void onExit() {
-        // Nothing special needed when exiting menu
     }
 }
