@@ -23,9 +23,6 @@ public class DrawCardEffect implements CardEffect {
         for (int i = 0; i < cardsToDraw; i++) {
             player.drawCard(state.getDeck());
         }
-        
-        // Skip the player's turn
-        state.skipNextTurn();
     }
     
     @Override
