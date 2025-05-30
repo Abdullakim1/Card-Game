@@ -1,6 +1,5 @@
 package com.cardgame.model.game;
 
-import com.cardgame.model.game.punishments.*;
 import java.awt.image.BufferedImage;
 
 /**
@@ -67,23 +66,5 @@ public class GameOutcome extends AbstractGameOutcome {
      */
     public static void loadOutcomeImages() {
         instance.loadAnimations();
-    }
-    
-    /**
-     * Gets a random outcome image for the current animation frame
-     * 
-     * @return A random outcome image
-     */
-    @Override
-    public BufferedImage getRandomOutcomeImage() {
-        return super.getRandomOutcomeImage();
-    }
-    
-    /**
-     * Resets the animation state to start a new animation sequence
-     */
-    @Override
-    public void resetAnimation() {
-        super.resetAnimation();
     }
 }

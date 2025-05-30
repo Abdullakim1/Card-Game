@@ -176,7 +176,7 @@ public class PlayState extends GameState {
 
         if (showOutcomeAnimation && gameOver) {
             try {
-                outcomeImage = GameOutcome.getRandomOutcomeImage();
+                outcomeImage = GameOutcome.getRandomOutcomeImageStatic();
             } catch (Exception e) {
                 System.err.println("Error updating animation: " + e.getMessage());
             }
@@ -333,7 +333,7 @@ public class PlayState extends GameState {
             message = "Game Over! " + winnerName + " wins!";
             messageTimer = Integer.MAX_VALUE;
             showOutcomeAnimation = true;
-            if (outcomeInitialized) GameOutcome.resetAnimation();
+            if (outcomeInitialized) GameOutcome.resetAnimationStatic();
         }
     }
 
