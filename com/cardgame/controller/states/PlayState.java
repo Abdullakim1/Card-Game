@@ -276,6 +276,8 @@ public class PlayState extends GameState {
         }
     }
 
+    // In cardgame/controller/states/PlayState.java
+
     private void handlePlayedCard(Card playedCard) {
         if (playedCard == null) return;
 
@@ -290,12 +292,12 @@ public class PlayState extends GameState {
         if (playedCard.getColor() == CardColor.GOLD) {
             if (activePlayer.isComputer()) {
                 // AI's chosen color (this.currentWildColor) was already set in processAITurn
-                // No message change needed here as processAITurn handles it
-            } else { // Human player played a WILD card
-                promptForColorSelection(); // This will set this.currentWildColor and a message for human
+                setCurrentColor(this.currentWildColor);
+            } else {
+                promptForColorSelection();
             }
         } else {
-            currentWildColor = playedCard.getColor(); // Non-wild card sets the active color
+            currentWildColor = playedCard.getColor();
         }
 
         CardEffect effect = CardEffectFactory.createEffect(playedCard);
@@ -303,29 +305,27 @@ public class PlayState extends GameState {
             if (effect instanceof DrawCardEffect) {
                 int nextPlayerActualIndex = calculateNextPlayerIndex(currentPlayerIndex, directionClockwise, false, players.size());
                 Player playerToDraw = players.get(nextPlayerActualIndex);
-                message = playerToDraw.getName() + " draws 2 cards! Turn skipped."; // Draw 2 effect
-                effect.apply(this, playerToDraw); // apply calls state.skipNextTurn()
+                // Assuming DrawCardEffect is for drawing 2 cards
+                message = playerToDraw.getName() + " draws 2 cards! Their turn is skipped.";
+                effect.apply(this, playerToDraw);
             } else if (effect instanceof SkipTurnEffect) {
-                // Message about skip is handled by advanceTurn after skipNextPlayerTurnFlag is used
-                effect.apply(this, null); // Player arg not strictly used by SkipTurnEffect
+                // The SkipTurnEffect calls state.skipNextTurn().
+                // The message for the skipped player will be generated in advanceTurn.
+                effect.apply(this, null);
             } else if (effect instanceof ReverseDirectionEffect) {
-                // Message about reverse is handled by advanceTurn when Green card is played
-                effect.apply(this, null); // Player arg not used
+                message = activePlayer.getName() + " played REVERSE! Direction of play is changed.";
+                effect.apply(this, null);
             } else if (effect instanceof WildCardEffect) {
-                // Color choice handled above. WildCardEffect's apply might call promptForColorSelection
-                // if not already set.
                 effect.apply(this, activePlayer);
             } else {
-                effect.apply(this, activePlayer); // Default for other effects
+                effect.apply(this, activePlayer);
             }
         }
 
-        // If message wasn't updated by an effect, ensure it's not stale
-        if (messageTimer <= 0 && !gameOver) {
-            message = players.get(currentPlayerIndex).getName() + " played. Next turn.";
+        if (messageTimer <= 0 && !gameOver && (message == null || message.endsWith("'s turn!"))) { // Avoid overwriting specific effect messages
+            message = activePlayer.getName() + " played " + formatCardNameForMessage(playedCard) + ".";
             messageTimer = 120;
         }
-
 
         if (activePlayer.handSize() == 0) {
             gameOver = true;
@@ -340,35 +340,42 @@ public class PlayState extends GameState {
     private void advanceTurn(Card cardJustPlayed) {
         if (gameOver) return;
 
-        boolean turnRepeats = false;
-        if (cardJustPlayed != null && cardJustPlayed.getColor() == CardColor.GREEN) { // GREEN REVERSE = player plays again
-            turnRepeats = true;
-            message = players.get(currentPlayerIndex).getName() + " played REVERSE and plays again!";
-        }
-        // RED SKIP: skipNextPlayerTurnFlag is set by SkipTurnEffect, turn passes.
+        // boolean turnRepeats = false; // No longer using turnRepeats for GREEN card.
+        // A GREEN card (Reverse) no longer grants an extra turn to the current player.
+        // Its effect (changing direction) is applied in handlePlayedCard via ReverseDirectionEffect.
+        // The turn will now pass to the next player in the NEW direction.
 
-        if (!turnRepeats) {
-            int previousPlayerActualIndex = currentPlayerIndex; // Store for message generation if a skip occurs
-            currentPlayerIndex = calculateNextPlayerIndex(currentPlayerIndex, directionClockwise, skipNextPlayerTurnFlag, players.size());
+        // If cardJustPlayed was GREEN, its effect (direction change) has already been applied.
+        // Message for GREEN card play is now set in handlePlayedCard.
 
-            if (skipNextPlayerTurnFlag) {
-                // The player at 'skippedPlayerIndex' was the one intended to play before the skip was applied
-                int skippedPlayerIndex = (previousPlayerActualIndex + (directionClockwise ? 1 : -1) + players.size()) % players.size();
-                if (skippedPlayerIndex == currentPlayerIndex && players.size() > 1) { // This means skipNextPlayerTurnFlag caused a double skip to return to same player after one skip
-                    // This case needs careful thought for N players. For 2 players, it's clear.
-                    // calculateNextPlayerIndex handles one skip.
-                    message = players.get(skippedPlayerIndex).getName() + "'s turn was skipped! Now " + players.get(currentPlayerIndex).getName() + "'s turn.";
-                } else if (skippedPlayerIndex != currentPlayerIndex) {
-                    message = players.get(skippedPlayerIndex).getName() + "'s turn was skipped! Now " + players.get(currentPlayerIndex).getName() + "'s turn.";
-                } else { // Only one player, or skip resulted in same player.
-                    message = players.get(currentPlayerIndex).getName() + "'s turn!";
-                }
-                skipNextPlayerTurnFlag = false; // Reset the flag
+        int previousPlayerActualIndex = currentPlayerIndex;
+        currentPlayerIndex = calculateNextPlayerIndex(currentPlayerIndex, directionClockwise, skipNextPlayerTurnFlag, players.size());
+
+        if (skipNextPlayerTurnFlag) {
+            int skippedPlayerIndex = (previousPlayerActualIndex + (directionClockwise ? 1 : -1) + players.size()) % players.size();
+            // Ensure skippedPlayerIndex is correctly identified even if direction changed before this skip applies
+            // For instance, if P0 plays BLUE (draw2+skip P1), direction is normal. Skipped is P1. Next is P2.
+            // If P0 plays RED (skip P1), direction is normal. Skipped is P1. Next is P2.
+            // The direction used for calculating skippedPlayerIndex should be the one *before* a potential reverse from cardJustPlayed,
+            // but ReverseDirectionEffect has already flipped it.
+            // Let's re-evaluate how to determine the truly skipped player's index for messaging.
+            // For now, the message combines the skip and the new turn:
+            if (players.size() > 0 && skippedPlayerIndex < players.size() && currentPlayerIndex < players.size()) {
+                message = players.get(skippedPlayerIndex).getName() + "'s turn was skipped! Now " + players.get(currentPlayerIndex).getName() + "'s turn.";
             } else {
+                // Fallback message if indices are problematic (shouldn't happen)
+                message = "A player was skipped! Now " + (currentPlayerIndex < players.size() ? players.get(currentPlayerIndex).getName() : "Next Player") + "'s turn.";
+            }
+            skipNextPlayerTurnFlag = false; // Reset the flag
+        } else {
+            // If no skip, and it wasn't a special message from handlePlayedCard, set default turn message.
+            if (currentPlayerIndex < players.size() && (message == null || !message.contains("played REVERSE") && !message.contains("draws 2 cards"))) {
                 message = players.get(currentPlayerIndex).getName() + "'s turn!";
+            } else if (currentPlayerIndex < players.size() && message != null && message.endsWith(".")) {
+                // Append to existing message if it was an action summary.
+                message += " Next is " + players.get(currentPlayerIndex).getName() + ".";
             }
         }
-        // If turnRepeats, currentPlayerIndex remains the same. Message for "plays again" already set.
 
         messageTimer = 120;
         updateCurrentPlayerCardBounds();
