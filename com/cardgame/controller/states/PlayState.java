@@ -4,8 +4,15 @@ import com.cardgame.Game;
 import com.cardgame.model.card.Card;
 import com.cardgame.model.card.Card.CardColor;
 import com.cardgame.model.card.Deck;
+import com.cardgame.model.card.effect.CardEffect;
+import com.cardgame.model.card.effect.CardEffectFactory;
+import com.cardgame.model.card.effect.DrawCardEffect;
+import com.cardgame.model.card.effect.ReverseDirectionEffect;
+import com.cardgame.model.card.effect.SkipTurnEffect;
+import com.cardgame.model.card.effect.WildCardEffect;
 import com.cardgame.model.player.Player;
 import com.cardgame.view.components.ModernButton;
+import com.cardgame.model.game.GameOutcome;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -13,538 +20,549 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import com.cardgame.model.game.GameOutcome;
 
 public class PlayState extends GameState {
-    private Player player;
-    private Player computer;
+    private List<Player> players;
+    private int currentPlayerIndex;
     private Deck deck;
     private Card topCard;
-    private boolean playerTurn;
-    private boolean skipNextTurn;
+    private boolean skipNextPlayerTurnFlag;
     private boolean gameOver;
-    private String winner;
+    private String winnerName;
     private boolean directionClockwise = true;
-    private CardColor currentColor;
+    private CardColor currentWildColor; // Stores the chosen color when a Wild card is on top
+
     private ModernButton drawButton;
     private Rectangle drawBounds;
     private ModernButton backToMenuButton;
     private Rectangle backToMenuBounds;
-    private Rectangle[] cardBounds;
+    private Rectangle[] currentPlayerCardBounds; // Bounds for the current human player's cards
     private String message;
     private int messageTimer;
-    
+
     // Game outcome animation
     private boolean showOutcomeAnimation;
     private BufferedImage outcomeImage;
     private boolean outcomeInitialized = false;
 
+    private boolean isAITurnPending = false;
+    private boolean includeComputerPlayer; // To distinguish game mode
+
+    // Constants for card rendering, can be static or instance
+    private static final int CARD_WIDTH = 80;
+    private static final int CARD_HEIGHT = 120;
+
     public PlayState(Game game) {
         super(game);
-        initializeGame();
+        List<String> defaultNames = new ArrayList<>();
+        defaultNames.add("Player");
+        initializeGame(defaultNames, true);
     }
-    
-    /**
-     * Creates a new play state with specified player names and computer player option
-     * 
-     * @param game The game instance
-     * @param playerNames List of player names
-     * @param includeComputer Whether to include a computer player
-     */
+
     public PlayState(Game game, List<String> playerNames, boolean includeComputer) {
         super(game);
         initializeGame(playerNames, includeComputer);
     }
 
-    private void initializeGame() {
-        List<String> defaultNames = new ArrayList<>();
-        defaultNames.add("Player");
-        initializeGame(defaultNames, true);
-    }
-    
-    /**
-     * Initializes the game with specified player names and computer player option
-     * 
-     * @param playerNames List of player names
-     * @param includeComputer Whether to include a computer player
-     */
-    private void initializeGame(List<String> playerNames, boolean includeComputer) {
+    private void initializeGame(List<String> playerNamesFromSelection, boolean includeComputerMode) {
+        this.includeComputerPlayer = includeComputerMode;
         deck = new Deck();
-        
-        // Initialize animation variables
-        showOutcomeAnimation = false;
-        outcomeImage = null;
-        outcomeInitialized = false;
-        
-        // Load the outcome animations
+        players = new ArrayList<>();
+
         try {
             GameOutcome.loadOutcomeImages();
             outcomeInitialized = true;
-            System.out.println("GameOutcome animations loaded successfully");
         } catch (Exception e) {
             System.err.println("Error loading GameOutcome animations: " + e.getMessage());
-            e.printStackTrace();
         }
-        
-        if (includeComputer) {
-            // Single player vs computer mode
-            player = new Player(playerNames.get(0), false);
-            computer = new Player("Computer", true);
-            
-            // Deal 7 cards to each player
-            player.addCards(deck.draw(7));
-            computer.addCards(deck.draw(7));
+        showOutcomeAnimation = false;
+        outcomeImage = null;
+
+        if (this.includeComputerPlayer) {
+            players.add(new Player(playerNamesFromSelection.get(0), false)); // Human player
+            players.add(new Player("Computer", true)); // AI player
         } else {
-            // Human vs human mode
-            player = new Player(playerNames.get(0), false);
-            computer = new Player(playerNames.size() > 1 ? playerNames.get(1) : "Player 2", false);
-            
-            // Deal 7 cards to each player
-            player.addCards(deck.draw(7));
-            computer.addCards(deck.draw(7));
+            for (String name : playerNamesFromSelection) {
+                players.add(new Player(name, false)); // All human players
+            }
         }
-        
-        // Place first card face up
+
+        for (Player p : players) {
+            p.addCards(deck.draw(7));
+        }
+
         topCard = deck.draw();
-        while (topCard != null && topCard.isSpecial()) {
+        while (topCard != null && topCard.isSpecial()) { // First card shouldn't be special
             deck.discard(topCard);
             topCard = deck.draw();
         }
-        if (topCard != null) {
-            topCard.setFaceUp(true);
+
+        if (topCard == null) { // Should not happen with a standard deck
+            gameOver = true;
+            message = "Error: Could not start game with a valid card.";
+            messageTimer = Integer.MAX_VALUE;
+            winnerName = "No One (Setup Error)";
+            return;
         }
-        
-        playerTurn = true;
-        skipNextTurn = false;
+        topCard.setFaceUp(true);
+        currentWildColor = topCard.getColor(); // Initial active color
+
+        currentPlayerIndex = 0; // First player starts
+        skipNextPlayerTurnFlag = false;
         gameOver = false;
-        winner = null;
-        message = "Your turn! Match the color or number";
-        messageTimer = 120;
-        
-        // Initialize UI elements
+        winnerName = null;
+        directionClockwise = true;
+        message = players.get(currentPlayerIndex).getName() + "'s turn! Match color or number.";
+        messageTimer = 180;
+
         drawButton = new ModernButton("Draw Card");
         drawBounds = new Rectangle(0, 0, 120, 40);
         backToMenuButton = new ModernButton("Back to Menu");
-        backToMenuBounds = new Rectangle(0, 0, 120, 40);
-        cardBounds = new Rectangle[7]; // Initial size for 7 cards
-        updateCardBounds();
+        backToMenuBounds = new Rectangle(0, 0, 150, 40);
+
+        updateCurrentPlayerCardBounds();
+
+        if (!gameOver && players.get(currentPlayerIndex).isComputer() && this.includeComputerPlayer) {
+            isAITurnPending = true;
+        } else {
+            isAITurnPending = false;
+        }
     }
 
-    private void updateCardBounds() {
-        // Get current window dimensions
-        int windowWidth = getGame().getWidth();
-        int windowHeight = getGame().getHeight();
-        
-        List<Card> playerHand = player.getHand();
-        int cardWidth = 80;
-        int cardHeight = 120;
-        int spacing = 20;
-        int startX = (windowWidth - (playerHand.size() * (cardWidth + spacing) - spacing)) / 2;
-        int y = windowHeight - 200;
+    private void updateCurrentPlayerCardBounds() {
+        if (gameOver || players.isEmpty() || currentPlayerIndex >= players.size()) return;
 
-        cardBounds = new Rectangle[playerHand.size()];
-        for (int i = 0; i < playerHand.size(); i++) {
-            cardBounds[i] = new Rectangle(startX + i * (cardWidth + spacing), y, cardWidth, cardHeight);
+        Player currentP = players.get(currentPlayerIndex);
+        // Only update bounds if it's a human player, AI hand is not shown this way
+        if (currentP.isComputer()) {
+            currentPlayerCardBounds = new Rectangle[0]; // No bounds needed for AI cards displayed this way
+            return;
+        }
+
+        List<Card> hand = currentP.getHand();
+        int cardWidth = CARD_WIDTH;
+        int cardHeight = CARD_HEIGHT;
+        int spacing = 10;
+
+        int maxCardsWithoutOverlap = (getGame().getWidth() - 100) / (cardWidth + spacing); // Max cards before overlap
+        int effectiveCardWidth = cardWidth;
+        int effectiveSpacing = spacing;
+
+        if (hand.size() > maxCardsWithoutOverlap && hand.size() > 0) {
+            effectiveCardWidth = (getGame().getWidth() - 100 - spacing) / hand.size(); // Distribute width
+            effectiveCardWidth = Math.max(40, effectiveCardWidth); // Min width
+            effectiveSpacing = 5; // Smaller spacing when overlapped
+            if(hand.size() * effectiveCardWidth + (hand.size()-1)*effectiveSpacing > getGame().getWidth() - 100){
+                // if still too wide, overlap cards by reducing spacing
+                effectiveSpacing = - (effectiveCardWidth / 2); // Overlap
+            }
+        }
+
+        int totalHandWidth = hand.isEmpty() ? 0 : (hand.size() -1) * (effectiveCardWidth + effectiveSpacing) + effectiveCardWidth;
+        int startX = (getGame().getWidth() - totalHandWidth) / 2;
+        int yPos = getGame().getHeight() - cardHeight - 50;
+
+        currentPlayerCardBounds = new Rectangle[hand.size()];
+        for (int i = 0; i < hand.size(); i++) {
+            currentPlayerCardBounds[i] = new Rectangle(startX + i * (effectiveCardWidth + effectiveSpacing), yPos, effectiveCardWidth, cardHeight);
         }
     }
 
     @Override
     public void tick() {
-        // Update message timer
         if (messageTimer > 0) {
             messageTimer--;
         }
-        
-        // Update outcome animation if active
+
         if (showOutcomeAnimation && gameOver) {
             try {
                 outcomeImage = GameOutcome.getRandomOutcomeImage();
-                if (outcomeImage != null) {
-                    System.out.println("Animation frame updated: " + outcomeImage.getWidth() + "x" + outcomeImage.getHeight());
-                } else {
-                    System.out.println("Warning: Animation frame is null");
-                }
             } catch (Exception e) {
                 System.err.println("Error updating animation: " + e.getMessage());
-                e.printStackTrace();
             }
         }
 
-        // Handle computer's turn
-        if (!playerTurn && !gameOver) {
-            // Add a small delay before computer plays
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            handleComputerTurn();
+        if (!gameOver && currentPlayerIndex < players.size() && players.get(currentPlayerIndex).isComputer() && isAITurnPending) {
+            isAITurnPending = false;
+            processAITurn();
         }
     }
 
-    private void handleComputerTurn() {
-        if (playerTurn || gameOver) return; // Safety check
+    private void processAITurn() {
+        if (gameOver || currentPlayerIndex >= players.size() || !players.get(currentPlayerIndex).isComputer()) {
+            isAITurnPending = false;
+            return;
+        }
 
-        List<Card> computerHand = computer.getHand();
-        Card playedCard = null;
-        int playIndex = -1;
+        Player ai = players.get(currentPlayerIndex);
+        List<Card> aiHand = ai.getHand();
+        Card cardToPlay = null;
+        int cardIndex = -1;
 
-        // First priority: Win the game if possible
-        for (int i = 0; i < computerHand.size(); i++) {
-            Card card = computerHand.get(i);
-            if (card.matches(topCard) && computerHand.size() == 1) {
-                playedCard = card;
-                playIndex = i;
+        // AI Logic:
+        for (int i = 0; i < aiHand.size(); i++) {
+            Card currentCardInHand = aiHand.get(i);
+            boolean matchesTopNormally = currentCardInHand.matches(topCard);
+            boolean matchesWildChoice = (topCard.getColor() == CardColor.GOLD && currentCardInHand.matches(currentWildColor));
+            boolean isWildCardInHand = currentCardInHand.getColor() == CardColor.GOLD;
+
+            if (isWildCardInHand || matchesTopNormally || matchesWildChoice) {
+                cardToPlay = currentCardInHand;
+                cardIndex = i;
                 break;
             }
         }
 
-        // Second priority: Play a skip or reverse card if available
-        if (playIndex == -1) {
-            for (int i = 0; i < computerHand.size(); i++) {
-                Card card = computerHand.get(i);
-                if (card.matches(topCard) && card.isSpecial() && 
-                    (card.getColor() == CardColor.RED || card.getColor() == CardColor.GREEN)) {
-                    playedCard = card;
-                    playIndex = i;
-                    break;
-                }
-            }
+        if (cardToPlay != null && cardToPlay.getColor() == CardColor.GOLD) {
+            this.currentWildColor = findMostCommonColorInHand(ai, true); // AI chooses color
         }
 
-        // Third priority: Block player from winning or counter their advantage
-        if (playIndex == -1 && player.handSize() <= 2) {
-            for (int i = 0; i < computerHand.size(); i++) {
-                Card card = computerHand.get(i);
-                if (card.matches(topCard)) {
-                    playedCard = card;
-                    playIndex = i;
-                    break;
-                }
+        if (cardToPlay != null) {
+            Card played = ai.playCard(cardIndex);
+            String playedMessage = ai.getName() + " played " + formatCardNameForMessage(played);
+            if (played.getColor() == CardColor.GOLD) {
+                playedMessage += " (chose " + this.currentWildColor.name() + ")";
             }
-        }
+            message = playedMessage;
+            messageTimer = 120;
 
-        // Fourth priority: Play any matching card
-        if (playIndex == -1) {
-            for (int i = 0; i < computerHand.size(); i++) {
-                Card card = computerHand.get(i);
-                if (card.matches(topCard)) {
-                    playedCard = card;
-                    playIndex = i;
-                    break;
-                }
-            }
-        }
-
-        if (playIndex != -1) {
-            // Play the card
-            playedCard = computer.playCard(playIndex);
-            
-            // Store the current player turn state before handling the card
-            boolean wasComputerTurn = !playerTurn;
-            
-            // Handle the played card
-            handlePlayedCard(playedCard);
-            
-            // For special cards (RED skip or GREEN reverse), keep the turn with the computer
-            if (playedCard.isSpecial()) {
-                if (playedCard.getColor() == CardColor.RED || playedCard.getColor() == CardColor.GREEN) {
-                    playerTurn = false; // Keep computer's turn
-                    message = "Computer played " + playedCard.getColor() + " special card and gets another turn!";
-                } else {
-                    playerTurn = true; // Switch to player's turn for other special cards
-                }
-            } else {
-                playerTurn = true; // Switch to player's turn for normal cards
-            }
-            
-            messageTimer = 60;
+            handlePlayedCard(played);
+            advanceTurn(played);
         } else {
-            // Draw a card only if we have no playable cards
-            Card drawnCard = deck.draw();
-            if (drawnCard != null) {
-                computer.addCard(drawnCard);
-                // Check if drawn card can be played
-                if (drawnCard.matches(topCard)) {
-                    playedCard = computer.playCard(computer.handSize() - 1);
-                    
-                    // Store the current player turn state before handling the card
-                    boolean wasComputerTurn = !playerTurn;
-                    
-                    // Handle the played card
-                    handlePlayedCard(playedCard);
-                    
-                    // For special cards (RED skip or GREEN reverse), keep the turn with the computer
-                    if (playedCard.isSpecial()) {
-                        if (playedCard.getColor() == CardColor.RED || playedCard.getColor() == CardColor.GREEN) {
-                            playerTurn = false; // Keep computer's turn
-                            message = "Computer drew and played " + playedCard.getColor() + " special card and gets another turn!";
-                        } else {
-                            playerTurn = true; // Switch to player's turn for other special cards
-                        }
-                    } else {
-                        playerTurn = true; // Switch to player's turn for normal cards
+            Card drawn = deck.draw();
+            if (drawn != null) {
+                ai.addCard(drawn);
+                message = ai.getName() + " drew a card.";
+                messageTimer = 120;
+
+                boolean canPlayDrawnNormally = drawn.matches(topCard);
+                boolean canPlayDrawnOnWild = (topCard.getColor() == CardColor.GOLD && drawn.matches(currentWildColor));
+                boolean drawnIsWild = drawn.getColor() == CardColor.GOLD;
+
+                if (drawnIsWild || canPlayDrawnNormally || canPlayDrawnOnWild) {
+                    Card playedAfterDraw = ai.playCard(ai.getHand().indexOf(drawn));
+                    String playedMessage = ai.getName() + " drew and played " + formatCardNameForMessage(playedAfterDraw);
+                    if (playedAfterDraw.getColor() == CardColor.GOLD) {
+                        this.currentWildColor = findMostCommonColorInHand(ai, true);
+                        playedMessage += " (chose " + this.currentWildColor.name() + ")";
                     }
-                } else {
-                    message = "Computer drew a card";
-                    playerTurn = true;
+                    message = playedMessage;
+                    messageTimer = 120;
+
+                    handlePlayedCard(playedAfterDraw);
+                    advanceTurn(playedAfterDraw);
+                    return;
                 }
             } else {
-                message = "No cards left to draw!";
-                playerTurn = true;
+                message = ai.getName() + " tried to draw, but deck is empty.";
+                messageTimer = 120;
             }
-            messageTimer = 60;
+            advanceTurn(null);
         }
-        
-        updateCardBounds();
     }
 
-    private void handlePlayedCard(Card played) {
-        if (played == null) return;
+    private String formatCardNameForMessage(Card card) {
+        if (card == null) return "a null card";
+        String cardColorName = card.getColor().name();
+        if (card.isSpecial()) {
+            return switch (card.getColor()) {
+                case RED -> "RED SKIP";
+                case BLUE -> "BLUE DRAW 2"; // Hardcoded "2" for message simplicity
+                case GREEN -> "GREEN REVERSE";
+                case GOLD -> "WILD"; // Color choice will be appended separately
+            };
+        } else {
+            return cardColorName + " " + card.getValue();
+        }
+    }
 
-        // Update top card
+    private void handlePlayedCard(Card playedCard) {
+        if (playedCard == null) return;
+
         if (topCard != null) {
             deck.discard(topCard);
         }
-        topCard = played;
+        topCard = playedCard;
         topCard.setFaceUp(true);
 
-        // Handle special card effects
-        if (played.isSpecial()) {
-            switch (played.getColor()) {
-                case RED -> {
-                    // RED = Skip card - player who played this gets another turn
-                    message = playerTurn ? 
-                        "Skip! " + computer.getName() + "'s turn skipped! You get another turn!" : 
-                        "Skip! " + player.getName() + "'s turn skipped! Computer gets another turn!";
-                    messageTimer = 60;
-                    
-                    // Don't change playerTurn - the current player gets another turn
-                    // This is handled by keeping the current playerTurn value
-                }
-                case BLUE -> {
-                    // BLUE = Draw 2 cards
-                    Player target = playerTurn ? computer : player;
-                    target.addCards(deck.draw(2));
-                    message = target.getName() + " draws 2 cards!";
-                    messageTimer = 60;
-                }
-                case GREEN -> {
-                    // GREEN = Reverse direction - player who played this gets another turn
-                    message = playerTurn ? 
-                        "Reverse! Direction changed! You get another turn!" : 
-                        "Reverse! Direction changed! Computer gets another turn!";
-                    messageTimer = 60;
-                    
-                    // Don't change playerTurn - the current player gets another turn
-                    // This is handled by keeping the current playerTurn value
-                }
-                case GOLD -> {
-                    // GOLD = Wild card
-                    message = "Wild card played!";
-                    messageTimer = 60;
-                }
+        Player activePlayer = players.get(currentPlayerIndex);
+
+        if (playedCard.getColor() == CardColor.GOLD) {
+            if (activePlayer.isComputer()) {
+                // AI's chosen color (this.currentWildColor) was already set in processAITurn
+                // No message change needed here as processAITurn handles it
+            } else { // Human player played a WILD card
+                promptForColorSelection(); // This will set this.currentWildColor and a message for human
+            }
+        } else {
+            currentWildColor = playedCard.getColor(); // Non-wild card sets the active color
+        }
+
+        CardEffect effect = CardEffectFactory.createEffect(playedCard);
+        if (effect != null) {
+            if (effect instanceof DrawCardEffect) {
+                int nextPlayerActualIndex = calculateNextPlayerIndex(currentPlayerIndex, directionClockwise, false, players.size());
+                Player playerToDraw = players.get(nextPlayerActualIndex);
+                message = playerToDraw.getName() + " draws 2 cards! Turn skipped."; // Draw 2 effect
+                effect.apply(this, playerToDraw); // apply calls state.skipNextTurn()
+            } else if (effect instanceof SkipTurnEffect) {
+                // Message about skip is handled by advanceTurn after skipNextPlayerTurnFlag is used
+                effect.apply(this, null); // Player arg not strictly used by SkipTurnEffect
+            } else if (effect instanceof ReverseDirectionEffect) {
+                // Message about reverse is handled by advanceTurn when Green card is played
+                effect.apply(this, null); // Player arg not used
+            } else if (effect instanceof WildCardEffect) {
+                // Color choice handled above. WildCardEffect's apply might call promptForColorSelection
+                // if not already set.
+                effect.apply(this, activePlayer);
+            } else {
+                effect.apply(this, activePlayer); // Default for other effects
             }
         }
 
-        // Check for game over
-        if (player.handSize() == 0) {
+        // If message wasn't updated by an effect, ensure it's not stale
+        if (messageTimer <= 0 && !gameOver) {
+            message = players.get(currentPlayerIndex).getName() + " played. Next turn.";
+            messageTimer = 120;
+        }
+
+
+        if (activePlayer.handSize() == 0) {
             gameOver = true;
-            winner = player.getName();
-            message = "Game Over! " + player.getName() + " wins!";
+            winnerName = activePlayer.getName();
+            message = "Game Over! " + winnerName + " wins!";
             messageTimer = Integer.MAX_VALUE;
-            
-            // Always show animation when the human player wins
             showOutcomeAnimation = true;
-            try {
-                GameOutcome.resetAnimation();
-                System.out.println("Animation started for player win: " + player.getName());
-                System.out.println("Is computer player: " + player.isComputer());
-            } catch (Exception e) {
-                System.err.println("Error starting animation: " + e.getMessage());
-                e.printStackTrace();
-            }
-        } else if (computer.handSize() == 0) {
-            gameOver = true;
-            winner = computer.getName();
-            message = "Game Over! " + computer.getName() + " wins!";
-            messageTimer = Integer.MAX_VALUE;
-            
-            // Always show animation when the computer wins
-            showOutcomeAnimation = true;
-            try {
-                GameOutcome.resetAnimation();
-                System.out.println("Animation started for computer win: " + computer.getName());
-                System.out.println("Is computer: " + computer.isComputer());
-            } catch (Exception e) {
-                System.err.println("Error starting animation: " + e.getMessage());
-                e.printStackTrace();
+            if (outcomeInitialized) GameOutcome.resetAnimation();
+        }
+    }
+
+    private void advanceTurn(Card cardJustPlayed) {
+        if (gameOver) return;
+
+        boolean turnRepeats = false;
+        if (cardJustPlayed != null && cardJustPlayed.getColor() == CardColor.GREEN) { // GREEN REVERSE = player plays again
+            turnRepeats = true;
+            message = players.get(currentPlayerIndex).getName() + " played REVERSE and plays again!";
+        }
+        // RED SKIP: skipNextPlayerTurnFlag is set by SkipTurnEffect, turn passes.
+
+        if (!turnRepeats) {
+            int previousPlayerActualIndex = currentPlayerIndex; // Store for message generation if a skip occurs
+            currentPlayerIndex = calculateNextPlayerIndex(currentPlayerIndex, directionClockwise, skipNextPlayerTurnFlag, players.size());
+
+            if (skipNextPlayerTurnFlag) {
+                // The player at 'skippedPlayerIndex' was the one intended to play before the skip was applied
+                int skippedPlayerIndex = (previousPlayerActualIndex + (directionClockwise ? 1 : -1) + players.size()) % players.size();
+                if (skippedPlayerIndex == currentPlayerIndex && players.size() > 1) { // This means skipNextPlayerTurnFlag caused a double skip to return to same player after one skip
+                    // This case needs careful thought for N players. For 2 players, it's clear.
+                    // calculateNextPlayerIndex handles one skip.
+                    message = players.get(skippedPlayerIndex).getName() + "'s turn was skipped! Now " + players.get(currentPlayerIndex).getName() + "'s turn.";
+                } else if (skippedPlayerIndex != currentPlayerIndex) {
+                    message = players.get(skippedPlayerIndex).getName() + "'s turn was skipped! Now " + players.get(currentPlayerIndex).getName() + "'s turn.";
+                } else { // Only one player, or skip resulted in same player.
+                    message = players.get(currentPlayerIndex).getName() + "'s turn!";
+                }
+                skipNextPlayerTurnFlag = false; // Reset the flag
+            } else {
+                message = players.get(currentPlayerIndex).getName() + "'s turn!";
             }
         }
+        // If turnRepeats, currentPlayerIndex remains the same. Message for "plays again" already set.
+
+        messageTimer = 120;
+        updateCurrentPlayerCardBounds();
+
+        if (!gameOver && currentPlayerIndex < players.size() && players.get(currentPlayerIndex).isComputer() && this.includeComputerPlayer) {
+            isAITurnPending = true;
+        } else {
+            isAITurnPending = false;
+        }
+    }
+
+    private static int calculateNextPlayerIndex(int currentIndex, boolean isClockwise, boolean applySkip, int numPlayers) {
+        if (numPlayers <= 0) return 0; // Should not happen
+        int direction = isClockwise ? 1 : -1;
+        int nextIndex = (currentIndex + direction + numPlayers) % numPlayers;
+        if (applySkip) {
+            nextIndex = (nextIndex + direction + numPlayers) % numPlayers; // Skip this player
+        }
+        return nextIndex;
     }
 
     @Override
     public void render(Graphics g) {
-        // Get current window dimensions
         int windowWidth = getGame().getWidth();
         int windowHeight = getGame().getHeight();
-        
-        // Update UI element positions
-        updateCardBounds();
-        int rightMargin = windowWidth - 150;
-        drawBounds.setBounds(rightMargin, windowHeight - 200, 120, 40);
-        backToMenuBounds.setBounds(rightMargin, windowHeight - 100, 120, 40);
-        
-        // Draw background
+
+        drawBounds.setBounds(windowWidth - 150, windowHeight - CARD_HEIGHT - 100, 120, 40);
+        backToMenuBounds.setBounds(windowWidth - 170, 20, 150, 40);
+
         g.setColor(new Color(40, 44, 52));
         g.fillRect(0, 0, windowWidth, windowHeight);
 
         if (gameOver) {
-            // Draw game over screen
-            
-            // Draw outcome animation if active
-            if (showOutcomeAnimation) {
-                try {
-                    if (outcomeImage != null) {
-                        System.out.println("Drawing animation frame: " + outcomeImage.getWidth() + "x" + outcomeImage.getHeight());
-                        
-                        // Make the animation more prominent
-                        int x = (windowWidth - outcomeImage.getWidth()) / 2;
-                        int y = windowHeight / 2; // Center vertically
-                        
-                        // Draw a border around the animation to make it stand out
-                        g.setColor(new Color(255, 215, 0)); // Gold border
-                        g.fillRect(x - 10, y - 10, outcomeImage.getWidth() + 20, outcomeImage.getHeight() + 20);
-                        
-                        // Draw the animation
-                        g.drawImage(outcomeImage, x, y, null);
-                        
-                        // Draw a label for the animation
-                        g.setColor(Color.RED);
-                        g.setFont(new Font("Arial", Font.BOLD, 20));
-                        g.drawString("PUNISHMENT FOR LOSING:", x, y - 15);
-                    } else {
-                        // If outcomeImage is null, draw a placeholder
-                        g.setColor(Color.RED);
-                        g.setFont(new Font("Arial", Font.BOLD, 24));
-                        g.drawString("PUNISHMENT LOADING...", 300, 350);
-                        System.out.println("Drawing placeholder for null animation");
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error rendering animation: " + e.getMessage());
-                    e.printStackTrace();
-                    
-                    // Draw error message if animation fails
-                    g.setColor(Color.RED);
-                    g.setFont(new Font("Arial", Font.BOLD, 16));
-                    g.drawString("Animation Error: " + e.getMessage(), 250, 350);
-                }
-            }
-            
-            g.setFont(new Font("Arial", Font.BOLD, 48));
-            FontMetrics fm = g.getFontMetrics();
-            String gameOverText = "Game Over!";
-            int textX = (windowWidth - fm.stringWidth(gameOverText)) / 2;
-            
-            // Draw text shadow
-            g.setColor(new Color(0, 0, 0, 100));
-            g.drawString(gameOverText, textX + 2, 200 + 2);
-            
-            // Draw main text
-            g.setColor(Color.WHITE);
-            g.drawString(gameOverText, textX, 200);
-            
-            // Draw winner announcement
-            g.setFont(new Font("Arial", Font.BOLD, 32));
-            fm = g.getFontMetrics();
-            String winnerText = winner + " Wins!";
-            textX = (windowWidth - fm.stringWidth(winnerText)) / 2;
-            g.drawString(winnerText, textX, 280);
-            
-            // Draw final score
-            g.setFont(new Font("Arial", Font.PLAIN, 24));
-            String scoreText = "Final Score - " + player.getName() + ": " + (7 - player.handSize()) + " | " + computer.getName() + ": " + (7 - computer.handSize());
-            fm = g.getFontMetrics();
-            textX = (windowWidth - fm.stringWidth(scoreText)) / 2;
-            g.drawString(scoreText, textX, 340);
-            
-            // Draw back to menu button centered at the bottom
-            int buttonX = (windowWidth - backToMenuBounds.width) / 2;
-            int buttonY = windowHeight - 100;
-            backToMenuBounds.setBounds(buttonX, buttonY, backToMenuBounds.width, backToMenuBounds.height);
-            backToMenuButton.render(g, backToMenuBounds.x, backToMenuBounds.y, backToMenuBounds.width, backToMenuBounds.height);
+            renderGameOverScreen(g, windowWidth, windowHeight);
             return;
         }
 
-        // Draw deck
+        int cardCenterX = windowWidth / 2 - CARD_WIDTH / 2;
+        int cardCenterY = windowHeight / 2 - CARD_HEIGHT / 2 - 50;
+
         g.setColor(new Color(30, 34, 42));
-        g.fillRoundRect(windowWidth - 100, windowHeight - 250, 80, 120, 10, 10);
+        g.fillRoundRect(cardCenterX - CARD_WIDTH - 30, cardCenterY, CARD_WIDTH, CARD_HEIGHT, 10, 10); // Deck
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.PLAIN, 12));
+        g.drawString("Deck: " + deck.remainingCards(), cardCenterX - CARD_WIDTH - 25, cardCenterY + CARD_HEIGHT + 15);
 
-        // Draw top card
         if (topCard != null) {
-            topCard.render(g, windowWidth / 2 - 40, windowHeight / 2 - 60, 80, 120);
-        }
+            topCard.render(g, cardCenterX, cardCenterY, CARD_WIDTH, CARD_HEIGHT);
+            if (topCard.getColor() == CardColor.GOLD) {
+                g.setColor(currentWildColor.getAwtColor()); // Use actual chosen color
+                g.setFont(new Font("Arial", Font.BOLD, 12));
+                g.drawString("Color: " + currentWildColor.name(), cardCenterX, cardCenterY + CARD_HEIGHT + 15);
+                // Draw a small swatch of the chosen color
+                g.fillRect(cardCenterX + CARD_WIDTH + 5, cardCenterY, 15, 15);
+                g.setColor(Color.BLACK);
+                g.drawRect(cardCenterX + CARD_WIDTH + 5, cardCenterY, 15, 15);
 
-        // Draw computer's cards face down
-        List<Card> computerHand = computer.getHand();
-        int opponentCardWidth = 60;
-        int opponentCardHeight = 90;
-        int opponentSpacing = 15;
-        int opponentStartX = (windowWidth - (computerHand.size() * (opponentCardWidth + opponentSpacing) - opponentSpacing)) / 2;
-        int opponentY = 150;
-        for (int i = 0; i < computerHand.size(); i++) {
-            g.setColor(new Color(30, 34, 42));
-            g.fillRoundRect(opponentStartX + i * (opponentCardWidth + opponentSpacing), opponentY, opponentCardWidth, opponentCardHeight, 10, 10);
-        }
-
-        // Draw player's cards
-        List<Card> playerHand = player.getHand();
-        // Make sure cardBounds array matches the hand size
-        if (cardBounds.length != playerHand.size()) {
-            updateCardBounds();
-        }
-        for (int i = 0; i < playerHand.size(); i++) {
-            Card card = playerHand.get(i);
-            if (card != null && i < cardBounds.length) {
-                card.setFaceUp(true);
-                card.render(g, cardBounds[i].x, cardBounds[i].y, 
-                           cardBounds[i].width, cardBounds[i].height);
             }
         }
 
-        // Draw UI elements
+        Player currentHumanPlayer = players.get(currentPlayerIndex);
+        if (!currentHumanPlayer.isComputer()) {
+            List<Card> hand = currentHumanPlayer.getHand();
+            for (int i = 0; i < hand.size(); i++) {
+                if (i < currentPlayerCardBounds.length) {
+                    Card card = hand.get(i);
+                    card.setFaceUp(true);
+                    boolean canPlayWild = card.getColor() == CardColor.GOLD;
+                    boolean matchesNormally = card.matches(topCard);
+                    boolean matchesWildColorChoice = topCard.getColor() == CardColor.GOLD && card.matches(currentWildColor);
+                    card.setHighlighted(canPlayWild || matchesNormally || matchesWildColorChoice);
+                    card.render(g, currentPlayerCardBounds[i].x, currentPlayerCardBounds[i].y, currentPlayerCardBounds[i].width, currentPlayerCardBounds[i].height);
+                }
+            }
+        }
+
+        int opponentInfoY = 60;
+        int opponentInfoXStart = 50;
+        int opponentInfoXIncrement = 180;
+        int opponentCardOffsetY = 20;
+        int opponentCardMiniWidth = CARD_WIDTH / 2;
+        int opponentCardMiniHeight = CARD_HEIGHT / 2;
+
+        for (int i = 0; i < players.size(); i++) {
+            Player p = players.get(i);
+            if (i == currentPlayerIndex && !p.isComputer()) continue; // Skip current human, hand is at bottom
+
+            int displayX = opponentInfoXStart + (i % 4) * opponentInfoXIncrement;
+            int displayY = opponentInfoY + (i / 4) * (opponentCardMiniHeight + 40);
+
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 16));
+            g.drawString(p.getName() + ": " + p.handSize() + " cards", displayX, displayY);
+
+            if (i == currentPlayerIndex) { // Highlight if it's this opponent's (AI) turn
+                g.setColor(Color.YELLOW);
+                g.drawRect(displayX - 5, displayY - 20, 160, 25 + p.handSize() * 5 + opponentCardMiniHeight); // Highlight area
+            }
+
+            // Draw face-down cards for opponents
+            for (int j = 0; j < p.handSize(); j++) {
+                if (j < 7) { // Limit visible opponent cards to avoid clutter
+                    // Create a dummy card for rendering back
+                    Card backCard = new Card(CardColor.RED, 0); // Color/value don't matter for back
+                    backCard.setFaceUp(false);
+                    backCard.render(g, displayX + j * (opponentCardMiniWidth/2 + 2), displayY + opponentCardOffsetY, opponentCardMiniWidth, opponentCardMiniHeight);
+                } else {
+                    g.setFont(new Font("Arial", Font.PLAIN, 10));
+                    g.setColor(Color.LIGHT_GRAY);
+                    g.drawString("+" + (p.handSize() - j) + " more", displayX + j * (opponentCardMiniWidth/2 + 2), displayY + opponentCardOffsetY + opponentCardMiniHeight/2);
+                    break;
+                }
+            }
+        }
+
         drawButton.render(g, drawBounds.x, drawBounds.y, drawBounds.width, drawBounds.height);
         backToMenuButton.render(g, backToMenuBounds.x, backToMenuBounds.y, backToMenuBounds.width, backToMenuBounds.height);
 
-        // Draw message
         if (messageTimer > 0) {
             g.setFont(new Font("Arial", Font.BOLD, 18));
-            g.setColor(Color.YELLOW);
             FontMetrics fm = g.getFontMetrics();
             int messageX = (windowWidth - fm.stringWidth(message)) / 2;
-            g.drawString(message, messageX, windowHeight / 2 - 100);
+            int messageY = windowHeight / 2 + CARD_HEIGHT / 2 + 60;
+            g.setColor(new Color(0,0,0,180)); // Shadow for message
+            g.fillRoundRect(messageX - 10, messageY - fm.getAscent() - 5, fm.stringWidth(message) + 20, fm.getHeight() + 10, 15, 15);
+            g.setColor(Color.YELLOW);
+            g.drawString(message, messageX, messageY);
         }
 
-        // Draw turn indicator
         g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 24));
-        String turnText = playerTurn ? player.getName() + "'s Turn" : computer.getName() + "'s Turn";
-        g.drawString(turnText, 20, 30);
-
-        // Draw player name and hand count
         g.setFont(new Font("Arial", Font.BOLD, 20));
-        g.setColor(Color.WHITE);
-        g.drawString(player.getName() + "'s Hand " + player.handSize() + " cards", 50, windowHeight - 220);
-        g.drawString(computer.getName() + "'s Cards: " + computer.handSize(), 20, 80);
-        g.drawString("Deck: " + deck.remainingCards(), windowWidth - 100, 180);
+        g.drawString(players.get(currentPlayerIndex).getName() + "'s Turn", 20, 40);
     }
+
+    private void renderGameOverScreen(Graphics g, int windowWidth, int windowHeight) {
+        // ... (renderGameOverScreen remains mostly the same as your last good version) ...
+        if (showOutcomeAnimation && outcomeInitialized && outcomeImage != null) {
+            int animX = (windowWidth - outcomeImage.getWidth()) / 2;
+            int animY = windowHeight / 2 - outcomeImage.getHeight() / 2 + 70;
+            g.setColor(new Color(255, 215, 0));
+            g.fillRect(animX - 5, animY - 5, outcomeImage.getWidth() + 10, outcomeImage.getHeight() + 10);
+            g.drawImage(outcomeImage, animX, animY, null);
+            g.setColor(Color.RED);
+            g.setFont(new Font("Arial", Font.BOLD, 18));
+            g.drawString("LOSER'S FATE:", animX, animY - 10);
+        } else if (showOutcomeAnimation) {
+            g.setColor(Color.RED);
+            g.setFont(new Font("Arial", Font.BOLD, 20));
+            g.drawString("Punishment loading...", windowWidth/2 - 100, windowHeight/2 + 80);
+        }
+
+        g.setFont(new Font("Arial", Font.BOLD, 48));
+        FontMetrics fm = g.getFontMetrics();
+        String gameOverText = "Game Over!";
+        int textX = (windowWidth - fm.stringWidth(gameOverText)) / 2;
+        g.setColor(new Color(0,0,0,150));
+        g.drawString(gameOverText, textX + 3, 150 + 3);
+        g.setColor(Color.WHITE);
+        g.drawString(gameOverText, textX, 150);
+
+        g.setFont(new Font("Arial", Font.BOLD, 32));
+        fm = g.getFontMetrics();
+        String winnerMsgText = winnerName != null ? winnerName + " Wins!" : "It's a Draw!"; // Handle no winner
+        textX = (windowWidth - fm.stringWidth(winnerMsgText)) / 2;
+        g.setColor(Color.BLACK);
+        g.drawString(winnerMsgText, textX + 2, 220 + 2);
+        g.setColor(Color.GREEN);
+        g.drawString(winnerMsgText, textX, 220);
+
+        g.setFont(new Font("Arial", Font.PLAIN, 20));
+        g.setColor(Color.WHITE);
+        int scoreY = 280;
+        if (!players.isEmpty()) { // Check if players list is initialized
+            for(Player p : players) {
+                String scoreText = p.getName() + ": " + p.handSize() + " cards remaining";
+                fm = g.getFontMetrics();
+                textX = (windowWidth - fm.stringWidth(scoreText)) / 2;
+                g.drawString(scoreText, textX, scoreY);
+                scoreY += 30;
+            }
+        }
+
+        int buttonX = (windowWidth - backToMenuBounds.width) / 2;
+        int buttonY = Math.max(scoreY + 20, windowHeight - 100); // Position below scores or at bottom
+        backToMenuBounds.setBounds(buttonX, buttonY, backToMenuBounds.width, backToMenuBounds.height);
+        backToMenuButton.render(g, backToMenuBounds.x, backToMenuBounds.y, backToMenuBounds.width, backToMenuBounds.height);
+    }
+
 
     @Override
     public void handleMouseEvent(MouseEvent e) {
         Point mouse = e.getPoint();
 
         if (gameOver) {
-            // Handle game over screen interactions
             if (e.getID() == MouseEvent.MOUSE_MOVED) {
                 backToMenuButton.setHovered(backToMenuBounds.contains(mouse));
             } else if (e.getID() == MouseEvent.MOUSE_CLICKED && backToMenuBounds.contains(mouse)) {
@@ -552,168 +570,151 @@ public class PlayState extends GameState {
             }
             return;
         }
-        
-        // Only handle events during player's turn
-        if (!playerTurn) return;
-        
-        // Handle hover effects
+
+        Player currentActivePlayer = players.get(currentPlayerIndex);
+
         if (e.getID() == MouseEvent.MOUSE_MOVED) {
-            drawButton.setHovered(drawBounds.contains(mouse));
+            boolean canInteractWithDraw = !currentActivePlayer.isComputer() || !isAITurnPending;
+            if(canInteractWithDraw) {
+                drawButton.setHovered(drawBounds.contains(mouse));
+            } else {
+                drawButton.setHovered(false);
+            }
             backToMenuButton.setHovered(backToMenuBounds.contains(mouse));
             return;
         }
 
-        // Handle clicks
+        if (currentActivePlayer.isComputer() && isAITurnPending) { // AI is thinking or about to act
+            if (e.getID() == MouseEvent.MOUSE_CLICKED && backToMenuBounds.contains(mouse)) { // Allow exiting during AI turn
+                getGame().setState(new MenuState(getGame()));
+            }
+            return; // Block other interactions during AI's pending turn
+        }
+
+
         if (e.getID() == MouseEvent.MOUSE_CLICKED) {
-            // Check if draw button was clicked
-            if (drawBounds.contains(mouse)) {
-                Card drawnCard = deck.draw();
-                if (drawnCard != null) {
-                    player.addCard(drawnCard);
-                    message = "You drew a card";
-                    messageTimer = 60;
-                    playerTurn = false;  // End player's turn after drawing
-                    updateCardBounds();
+            if (drawBounds.contains(mouse) && !currentActivePlayer.isComputer()) {
+                Card drawn = deck.draw();
+                if (drawn != null) {
+                    currentActivePlayer.addCard(drawn);
+                    message = currentActivePlayer.getName() + " drew a card.";
+                    updateCurrentPlayerCardBounds();
+                    advanceTurn(null);
                 } else {
-                    message = "No cards left to draw!";
-                    messageTimer = 60;
+                    message = "Deck is empty!";
                 }
+                messageTimer = 120;
                 return;
             }
-            
-            // Check if back to menu button was clicked
+
             if (backToMenuBounds.contains(mouse)) {
                 getGame().setState(new MenuState(getGame()));
                 return;
             }
-            
-            // Check if a card was clicked
-            for (int i = 0; i < cardBounds.length && i < player.getHand().size(); i++) {
-                if (cardBounds[i].contains(mouse)) {
-                    // Try to play the card
-                    Card selectedCard = player.getHand().get(i);
-                    if (selectedCard.matches(topCard)) {
-                        Card playedCard = player.playCard(i);
-                        handlePlayedCard(playedCard);
-                        
-                        // For special cards (RED skip or GREEN reverse), keep the turn with the player
-                        if (playedCard.isSpecial() && 
-                            (playedCard.getColor() == CardColor.RED || playedCard.getColor() == CardColor.GREEN)) {
-                            playerTurn = true; // Player gets another turn
+
+            if (!currentActivePlayer.isComputer()) {
+                List<Card> hand = currentActivePlayer.getHand();
+                for (int i = 0; i < currentPlayerCardBounds.length; i++) {
+                    if (i < hand.size() && currentPlayerCardBounds[i].contains(mouse)) {
+                        Card selectedCard = hand.get(i);
+                        boolean canPlayWild = selectedCard.getColor() == CardColor.GOLD;
+                        boolean matchesNormally = selectedCard.matches(topCard);
+                        boolean matchesWildColorChoice = topCard.getColor() == CardColor.GOLD && selectedCard.matches(currentWildColor);
+
+                        if (canPlayWild || matchesNormally || matchesWildColorChoice) {
+                            Card played = currentActivePlayer.playCard(i);
+                            // Message is set inside handlePlayedCard or promptForColorSelection for wilds
+                            handlePlayedCard(played);
+                            advanceTurn(played);
                         } else {
-                            playerTurn = false; // Switch to computer's turn for other cards
+                            message = "Cannot play this card. Match color/value or play a Wild.";
+                            messageTimer = 120;
                         }
-                        
-                        updateCardBounds();
-                        message = "You played " + playedCard.getColor() +
-                                (playedCard.isSpecial() ? " special card" : " " + playedCard.getValue());
-                        messageTimer = 60;
-                    } else {
-                        message = "Card doesn't match! Match the color or number.";
-                        messageTimer = 60;
+                        return;
                     }
-                    break;
                 }
             }
         }
     }
+
     @Override
     public void onEnter() {
-        // Reset button states
-        drawButton.setHovered(false);
-        drawButton.setPressed(false);
+        if (drawButton != null) { // Null check for safety
+            drawButton.setHovered(false);
+            drawButton.setPressed(false);
+        }
         if (backToMenuButton != null) {
             backToMenuButton.setHovered(false);
             backToMenuButton.setPressed(false);
         }
+        updateCurrentPlayerCardBounds();
+        if (!gameOver && currentPlayerIndex < players.size() && players.get(currentPlayerIndex).isComputer() && this.includeComputerPlayer) {
+            isAITurnPending = true;
+        } else {
+            isAITurnPending = false;
+        }
     }
 
     @Override
-    public void onExit() {
-        // Nothing special needed
+    public void onExit() { /* Nothing special */ }
+
+    public Deck getDeck() { return deck; }
+
+    public void skipNextTurn() {
+        this.skipNextPlayerTurnFlag = true;
     }
-    
-    /**
-     * Reverses the direction of play
-     */
+
     public void reverseDirection() {
         directionClockwise = !directionClockwise;
-        message = "Direction reversed!";
-        messageTimer = 120;
-        
-        // Note: We don't change playerTurn here anymore
-        // The player who played the reverse card gets another turn
-        // This is handled in the handlePlayedCard method
     }
-    
-    /**
-     * Gets the current deck
-     * @return The game deck
-     */
-    public Deck getDeck() {
-        return deck;
+
+    public CardColor getCurrentWildColor() {
+        return this.currentWildColor;
     }
-    
-    /**
-     * Sets the flag to skip the next player's turn
-     */
-    public void skipNextTurn() {
-        skipNextTurn = true;
-        message = "Next turn skipped!";
-        messageTimer = 120;
-        
-        // Note: We don't change playerTurn here anymore
-        // The player who played the skip card gets another turn
-        // This is handled in the handlePlayedCard method
-    }
-    
-    /**
-     * Sets the current color for wild card effects
-     * @param color The new color to set
-     */
+
     public void setCurrentColor(CardColor color) {
-        this.currentColor = color;
-        message = "Color changed to " + color.toString();
-        messageTimer = 120;
+        this.currentWildColor = color;
+        // Message updated by caller (promptForColorSelection or handlePlayedCard)
     }
-    
-    /**
-     * Prompts the player to select a color for wild cards
-     */
+
     public void promptForColorSelection() {
-        // This would typically show a UI for color selection
-        // For now, we'll default to a color based on the player's hand
-        CardColor mostCommonColor = findMostCommonColorInHand(player);
-        setCurrentColor(mostCommonColor);
+        Player p = players.get(currentPlayerIndex);
+        CardColor chosenColor;
+        if (p.isComputer()) {
+            // AI's color (this.currentWildColor) should be pre-determined in processAITurn.
+            // If not, this is a fallback.
+            chosenColor = (this.currentWildColor != null && this.currentWildColor != CardColor.GOLD) ? this.currentWildColor : findMostCommonColorInHand(p, true);
+        } else {
+            // Human player: Needs UI. Auto-selects for now.
+            chosenColor = findMostCommonColorInHand(p, false);
+            message = p.getName() + " played WILD and chose " + chosenColor.name() + ".";
+            messageTimer = 120;
+        }
+        setCurrentColor(chosenColor);
     }
-    
-    /**
-     * Helper method to find the most common card color in a player's hand
-     * @param player The player whose hand to analyze
-     * @return The most common card color
-     */
-    private CardColor findMostCommonColorInHand(Player player) {
-        // Count occurrences of each color
-        int[] colorCounts = new int[CardColor.values().length];
-        List<Card> playerCards = player.getCards();
-        
-        for (Card card : playerCards) {
-            if (card.getColor() != CardColor.GOLD) { // Skip wild cards
-                colorCounts[card.getColor().ordinal()]++;
+
+    private CardColor findMostCommonColorInHand(Player player, boolean forAIWildChoice) {
+        Map<CardColor, Integer> counts = player.getColorCounts();
+        CardColor mostCommon = null;
+        int max = -1;
+
+        // Prioritize non-GOLD colors unless it's for AI choosing its wild color benefit
+        for (CardColor c : CardColor.values()) {
+            if (c == CardColor.GOLD && !forAIWildChoice) continue;
+            int count = counts.getOrDefault(c, 0);
+            if (count > max) {
+                max = count;
+                mostCommon = c;
             }
         }
-        
-        // Find the color with the highest count
-        CardColor mostCommonColor = CardColor.RED; // Default
-        int maxCount = 0;
-        
-        for (CardColor color : CardColor.values()) {
-            if (color != CardColor.GOLD && colorCounts[color.ordinal()] > maxCount) {
-                maxCount = colorCounts[color.ordinal()];
-                mostCommonColor = color;
+
+        if (mostCommon == null || max <=0) { // If hand is empty, only gold, or no clear majority
+            // Fallback: pick any non-GOLD color if possible, or a default
+            for (Card card : player.getHand()) {
+                if (card.getColor() != CardColor.GOLD) return card.getColor();
             }
+            return CardColor.BLUE; // Absolute fallback
         }
-        
-        return mostCommonColor;
+        return mostCommon;
     }
 }
