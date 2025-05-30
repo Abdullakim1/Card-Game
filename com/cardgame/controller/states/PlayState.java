@@ -395,69 +395,99 @@ public class PlayState extends GameState {
         int windowWidth = getGame().getWidth();
         int windowHeight = getGame().getHeight();
 
-        drawBounds.setBounds(windowWidth - 150, windowHeight - CARD_HEIGHT - 100, 120, 40);
-        backToMenuBounds.setBounds(windowWidth - 170, 20, 150, 40);
+        // Adjusted Y positions and added some X padding for elements near edges
+        int topMargin = 50; // Increased top margin for UI elements
+        int leftMargin = 30; // General left margin
+        int rightMargin = 30; // General right margin
+
+        drawBounds.setBounds(windowWidth - 150 - rightMargin, windowHeight - CARD_HEIGHT - 100, 120, 40);
+        // Adjusted "Back to Menu" button position
+        backToMenuBounds.setBounds(windowWidth - 150 - rightMargin, topMargin - 20 , 150, 40);
+
 
         g.setColor(new Color(40, 44, 52));
         g.fillRect(0, 0, windowWidth, windowHeight);
 
         if (gameOver) {
-            renderGameOverScreen(g, windowWidth, windowHeight);
+            renderGameOverScreen(g, windowWidth, windowHeight); // Ensure this method also respects margins if needed
             return;
         }
 
+        // --- Central elements: Deck and Top Card ---
         int cardCenterX = windowWidth / 2 - CARD_WIDTH / 2;
-        int cardCenterY = windowHeight / 2 - CARD_HEIGHT / 2 - 50;
+        int cardCenterY = windowHeight / 2 - CARD_HEIGHT / 2 - 50; // Positioned slightly up from true center
 
+        // Deck Image
+        int deckImageX = cardCenterX - CARD_WIDTH - 30; // X-coordinate of the deck image
         g.setColor(new Color(30, 34, 42));
-        g.fillRoundRect(cardCenterX - CARD_WIDTH - 30, cardCenterY, CARD_WIDTH, CARD_HEIGHT, 10, 10); // Deck
+        g.fillRoundRect(deckImageX, cardCenterY, CARD_WIDTH, CARD_HEIGHT, 10, 10);
+
+        // Deck Text (Repositioned to be centered under the deck image)
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.PLAIN, 12));
-        g.drawString("Deck: " + deck.remainingCards(), cardCenterX - CARD_WIDTH - 25, cardCenterY + CARD_HEIGHT + 15);
+        String deckTextString = "Deck: " + deck.remainingCards();
+        FontMetrics deckFm = g.getFontMetrics();
+        int deckTextWidth = deckFm.stringWidth(deckTextString);
+        int deckTextX = deckImageX + (CARD_WIDTH / 2) - (deckTextWidth / 2); // Centered under deck image
+        int deckTextY = cardCenterY + CARD_HEIGHT + 15; // Below deck image
+        g.drawString(deckTextString, deckTextX, deckTextY);
 
+        // Top Card (Discard Pile)
         if (topCard != null) {
             topCard.render(g, cardCenterX, cardCenterY, CARD_WIDTH, CARD_HEIGHT);
             if (topCard.getColor() == CardColor.GOLD) {
-                g.setColor(currentWildColor.getAwtColor()); // Use actual chosen color
+                // Display chosen wild color next to the top card
+                g.setColor(currentWildColor.getAwtColor());
                 g.setFont(new Font("Arial", Font.BOLD, 12));
-                g.drawString("Color: " + currentWildColor.name(), cardCenterX, cardCenterY + CARD_HEIGHT + 15);
-                // Draw a small swatch of the chosen color
-                g.fillRect(cardCenterX + CARD_WIDTH + 5, cardCenterY, 15, 15);
-                g.setColor(Color.BLACK);
-                g.drawRect(cardCenterX + CARD_WIDTH + 5, cardCenterY, 15, 15);
+                String wildColorText = "Color: " + currentWildColor.name();
+                FontMetrics wildFm = g.getFontMetrics();
+                int wildTextX = cardCenterX + (CARD_WIDTH/2) - (wildFm.stringWidth(wildColorText)/2) ; // Centered under top card
+                g.drawString(wildColorText, wildTextX, cardCenterY + CARD_HEIGHT + 15);
 
+                // Optional: Draw a small swatch of the chosen color next to the text or top card
+                g.fillRect(cardCenterX + CARD_WIDTH + 10, cardCenterY + CARD_HEIGHT - 15, 15, 15);
+                g.setColor(Color.BLACK);
+                g.drawRect(cardCenterX + CARD_WIDTH + 10, cardCenterY + CARD_HEIGHT - 15, 15, 15);
             }
         }
 
+        // --- Current Player's Hand (Bottom) ---
         Player currentHumanPlayer = players.get(currentPlayerIndex);
         if (!currentHumanPlayer.isComputer()) {
             List<Card> hand = currentHumanPlayer.getHand();
-            for (int i = 0; i < hand.size(); i++) {
-                if (i < currentPlayerCardBounds.length) {
-                    Card card = hand.get(i);
-                    card.setFaceUp(true);
-                    boolean canPlayWild = card.getColor() == CardColor.GOLD;
-                    boolean matchesNormally = card.matches(topCard);
-                    boolean matchesWildColorChoice = topCard.getColor() == CardColor.GOLD && card.matches(currentWildColor);
-                    card.setHighlighted(canPlayWild || matchesNormally || matchesWildColorChoice);
-                    card.render(g, currentPlayerCardBounds[i].x, currentPlayerCardBounds[i].y, currentPlayerCardBounds[i].width, currentPlayerCardBounds[i].height);
+            if (currentPlayerCardBounds != null) { // Ensure bounds are initialized
+                for (int i = 0; i < hand.size(); i++) {
+                    if (i < currentPlayerCardBounds.length) { // Safety check
+                        Card card = hand.get(i);
+                        card.setFaceUp(true);
+                        boolean canPlayWild = card.getColor() == CardColor.GOLD;
+                        boolean matchesNormally = card.matches(topCard);
+                        boolean matchesWildColorChoice = topCard.getColor() == CardColor.GOLD && card.matches(currentWildColor);
+                        card.setHighlighted(canPlayWild || matchesNormally || matchesWildColorChoice);
+                        // Use effectiveWidth/Height from updateCurrentPlayerCardBounds if they differ from CARD_WIDTH/HEIGHT
+                        card.render(g, currentPlayerCardBounds[i].x, currentPlayerCardBounds[i].y, currentPlayerCardBounds[i].width, currentPlayerCardBounds[i].height);
+                    }
                 }
             }
         }
 
-        int opponentInfoY = 60;
-        int opponentInfoXStart = 50;
-        int opponentInfoXIncrement = 180;
-        int opponentCardOffsetY = 20;
+        // --- Opponent Information (Top Area) ---
+        int opponentInfoBaseY = topMargin + 10; // Start opponent info below the top margin
+        int opponentInfoXStart = leftMargin;
+        int opponentInfoXIncrement = 180; // Horizontal spacing for multiple opponents
+        int opponentCardOffsetY = 20; // Vertical offset for cards below name
         int opponentCardMiniWidth = CARD_WIDTH / 2;
         int opponentCardMiniHeight = CARD_HEIGHT / 2;
 
         for (int i = 0; i < players.size(); i++) {
             Player p = players.get(i);
-            if (i == currentPlayerIndex && !p.isComputer()) continue; // Skip current human, hand is at bottom
+            // Skip rendering the current human player here, as their hand is shown at the bottom
+            if (i == currentPlayerIndex && !p.isComputer()) continue;
 
+            // Basic horizontal layout for opponents, might need adjustment for many players
             int displayX = opponentInfoXStart + (i % 4) * opponentInfoXIncrement;
-            int displayY = opponentInfoY + (i / 4) * (opponentCardMiniHeight + 40);
+            // Basic vertical layout for opponents if more than 4
+            int displayY = opponentInfoBaseY + (i / 4) * (opponentCardMiniHeight + 40 + opponentCardOffsetY);
 
             g.setColor(Color.WHITE);
             g.setFont(new Font("Arial", Font.BOLD, 16));
@@ -465,42 +495,51 @@ public class PlayState extends GameState {
 
             if (i == currentPlayerIndex) { // Highlight if it's this opponent's (AI) turn
                 g.setColor(Color.YELLOW);
-                g.drawRect(displayX - 5, displayY - 20, 160, 25 + p.handSize() * 5 + opponentCardMiniHeight); // Highlight area
+                // Adjust highlight box to fit text and a few cards
+                g.drawRect(displayX - 5, displayY - 20, 170, 25 + opponentCardMiniHeight + 5);
             }
 
             // Draw face-down cards for opponents
             for (int j = 0; j < p.handSize(); j++) {
-                if (j < 7) { // Limit visible opponent cards to avoid clutter
-                    // Create a dummy card for rendering back
-                    Card backCard = new Card(CardColor.RED, 0); // Color/value don't matter for back
+                if (j < 5) { // Limit visible opponent cards to avoid clutter for each opponent
+                    Card backCard = new Card(CardColor.RED, 0); // Dummy card for back rendering
                     backCard.setFaceUp(false);
-                    backCard.render(g, displayX + j * (opponentCardMiniWidth/2 + 2), displayY + opponentCardOffsetY, opponentCardMiniWidth, opponentCardMiniHeight);
+                    backCard.render(g, displayX + j * (opponentCardMiniWidth / 3 + 2), displayY + opponentCardOffsetY, opponentCardMiniWidth, opponentCardMiniHeight);
                 } else {
                     g.setFont(new Font("Arial", Font.PLAIN, 10));
                     g.setColor(Color.LIGHT_GRAY);
-                    g.drawString("+" + (p.handSize() - j) + " more", displayX + j * (opponentCardMiniWidth/2 + 2), displayY + opponentCardOffsetY + opponentCardMiniHeight/2);
-                    break;
+                    g.drawString("+" + (p.handSize() - j) + "", displayX + j * (opponentCardMiniWidth / 3 + 2), displayY + opponentCardOffsetY + opponentCardMiniHeight / 2 + 5);
+                    break; // Stop after showing "+X more"
                 }
             }
         }
 
+        // --- UI Buttons ---
         drawButton.render(g, drawBounds.x, drawBounds.y, drawBounds.width, drawBounds.height);
         backToMenuButton.render(g, backToMenuBounds.x, backToMenuBounds.y, backToMenuBounds.width, backToMenuBounds.height);
 
-        if (messageTimer > 0) {
+        // --- Message Display (Centered, below top card area) ---
+        if (messageTimer > 0 && message !=null && !message.trim().isEmpty()) {
             g.setFont(new Font("Arial", Font.BOLD, 18));
-            FontMetrics fm = g.getFontMetrics();
-            int messageX = (windowWidth - fm.stringWidth(message)) / 2;
-            int messageY = windowHeight / 2 + CARD_HEIGHT / 2 + 60;
-            g.setColor(new Color(0,0,0,180)); // Shadow for message
-            g.fillRoundRect(messageX - 10, messageY - fm.getAscent() - 5, fm.stringWidth(message) + 20, fm.getHeight() + 10, 15, 15);
+            FontMetrics msgFm = g.getFontMetrics();
+            int messageWidth = msgFm.stringWidth(message);
+            int messageX = (windowWidth - messageWidth) / 2;
+            // Position message clearly below the central card elements
+            int messageY = cardCenterY + CARD_HEIGHT + 45;
+
+            // Background for message for better readability
+            g.setColor(new Color(0,0,0,180));
+            g.fillRoundRect(messageX - 10, messageY - msgFm.getAscent() - 5, messageWidth + 20, msgFm.getHeight() + 10, 15, 15);
             g.setColor(Color.YELLOW);
             g.drawString(message, messageX, messageY);
         }
 
+        // --- Current Turn Indicator (Top-Left, with increased margin) ---
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 20));
-        g.drawString(players.get(currentPlayerIndex).getName() + "'s Turn", 20, 40);
+        if (currentPlayerIndex < players.size()) { // Ensure currentPlayerIndex is valid
+            g.drawString(players.get(currentPlayerIndex).getName() + "'s Turn", leftMargin, topMargin);
+        }
     }
 
     private void renderGameOverScreen(Graphics g, int windowWidth, int windowHeight) {
