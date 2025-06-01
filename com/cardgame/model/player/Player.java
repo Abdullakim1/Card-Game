@@ -39,19 +39,12 @@ public class Player {
         return new ArrayList<>(hand);
     }
     
-    /**
-     * Gets the player's cards
-     * @return The list of cards in the player's hand
-     */
+    
     public List<Card> getCards() {
         return getHand();
     }
     
-    /**
-     * Draws a card from the deck and adds it to the player's hand
-     * @param deck The deck to draw from
-     * @return The card that was drawn, or null if the deck is empty
-     */
+   
     public Card drawCard(Deck deck) {
         if (deck != null) {
             Card card = deck.draw();

@@ -6,9 +6,7 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 
-/**
- * Social Rejection punishment animation
- */
+
 public class SocialRejection implements PunishmentAnimation {
     private static final int WIDTH = 300;
     private static final int HEIGHT = 200;
@@ -87,7 +85,6 @@ public class SocialRejection implements PunishmentAnimation {
         g2d.drawLine(personX, personY + 20, personX - 10, personY + 40);
         g2d.drawLine(personX, personY + 20, personX + 10, personY + 40);
         
-        // Draw thought bubble
         String[] thoughts = {
             "Nobody likes me...",
             "They're all avoiding me...",
@@ -212,9 +209,7 @@ public class SocialRejection implements PunishmentAnimation {
         return image;
     }
     
-    /**
-     * Helper method to draw a group of people
-     */
+    
     private void drawGroup(Graphics2D g2d, int centerX, int centerY, int count, int frame) {
         // Draw each person in the group
         for (int i = 0; i < count; i++) {

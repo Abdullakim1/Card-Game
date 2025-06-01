@@ -31,13 +31,11 @@ public class CardAnimation {
     public void update() {
         if (!isAnimating) return;
 
-        // Update position
         float dx = targetX - x;
         float dy = targetY - y;
         x += dx * speed;
         y += dy * speed;
 
-        // Check if animation is complete
         if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
             isAnimating = false;
         }
@@ -46,20 +44,15 @@ public class CardAnimation {
     public void render(Graphics2D g2d) {
         if (cardImage == null || !isAnimating) return;
 
-        // Save original composite
         Composite originalComposite = g2d.getComposite();
 
-        // Apply alpha transparency
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
-        // Calculate scaled dimensions
         int width = (int)(cardImage.getWidth() * scale);
         int height = (int)(cardImage.getHeight() * scale);
 
-        // Draw the card
         g2d.drawImage(cardImage, (int)x, (int)y, width, height, null);
 
-        // Restore original composite
         g2d.setComposite(originalComposite);
     }
 

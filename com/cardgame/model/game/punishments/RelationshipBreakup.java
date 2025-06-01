@@ -6,9 +6,7 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 
-/**
- * Relationship Breakup punishment animation
- */
+
 public class RelationshipBreakup implements PunishmentAnimation {
     private static final int WIDTH = 300;
     private static final int HEIGHT = 200;
@@ -121,10 +119,10 @@ public class RelationshipBreakup implements PunishmentAnimation {
         // Draw changing messages at bottom
         String[] messages = {
                 "They never loved you anyway",
-                "You'll die alone with cats",
-                "They're already dating someone else",
+                "We're just victims of love",
+                "Now, there's nothing we can do",
                 "They blocked your number",
-                "They're telling everyone your secrets"
+                "This is where it ends"
         };
 
         g2d.setFont(new Font("Arial", Font.BOLD, 14));

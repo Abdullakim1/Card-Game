@@ -7,9 +7,7 @@ import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.util.Random;
 
-/**
- * Financial Ruin punishment animation
- */
+
 public class FinancialRuin implements PunishmentAnimation {
     private static final int WIDTH = 300;
     private static final int HEIGHT = 200;
@@ -84,7 +82,6 @@ public class FinancialRuin implements PunishmentAnimation {
         
         g2d.draw(path);
         
-        // Draw "CRASH" text at the crash point
         g2d.setColor(new Color(200, 0, 0));
         g2d.setFont(new Font("Arial", Font.BOLD, 14));
         g2d.drawString("CRASH!", WIDTH / 2 - 20, 110);

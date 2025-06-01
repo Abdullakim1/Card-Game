@@ -6,9 +6,7 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 
-/**
- * Job Loss punishment animation
- */
+
 public class JobLoss implements PunishmentAnimation {
     private static final int WIDTH = 300;
     private static final int HEIGHT = 200;

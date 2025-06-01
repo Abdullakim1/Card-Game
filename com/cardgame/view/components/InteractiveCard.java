@@ -8,14 +8,7 @@ import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
-/**
- * A card that can be drawn and interacted with
- * This class demonstrates multityping by implementing multiple interfaces
- */
 public class InteractiveCard implements Drawable, Interactive {
-    // Information hiding: private fields (step 1)
-    // Instance variables (step 2)
-    // Some constant, some variable (step 3)
     private final Card card;
     private final Rectangle bounds;
     private boolean selected;
@@ -30,14 +23,11 @@ public class InteractiveCard implements Drawable, Interactive {
     
     @Override
     public void render(Graphics g, int x, int y, int width, int height) {
-        // Update bounds if position changed
         bounds.setLocation(x, y);
         bounds.setSize(width, height);
         
-        // Set card highlight based on selection/hover state
         card.setHighlighted(selected || hovered);
         
-        // Render the card
         card.render(g, x, y, width, height);
     }
     
@@ -49,7 +39,7 @@ public class InteractiveCard implements Drawable, Interactive {
         if (e.getID() == MouseEvent.MOUSE_MOVED) {
             boolean wasHovered = hovered;
             hovered = contains(x, y);
-            return wasHovered != hovered; // Return true if hover state changed
+            return wasHovered != hovered;
         }
         else if (e.getID() == MouseEvent.MOUSE_CLICKED && contains(x, y)) {
             selected = !selected;

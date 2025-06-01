@@ -15,7 +15,7 @@ public class RulesState extends GameState {
     private Rectangle scrollDownBounds;
     private int scrollOffset = 0;
     private static final int SCROLL_SPEED = 20;
-    private static final int MAX_SCROLL = 400; // Will be adjusted based on content
+    private static final int MAX_SCROLL = 400; 
     private final String[] rules = {
         "Card Game Rules",
         "",
@@ -59,11 +59,9 @@ public class RulesState extends GameState {
         int buttonWidth = 150;
         int buttonHeight = 40;
         
-        // Initialize with dummy positions, will be updated in render
         backBounds = new Rectangle(0, 0, buttonWidth, buttonHeight);
         backButton = new ModernButton("Back to Menu");
 
-        // Add scroll buttons
         scrollUpButton = new ModernButton("▲");
         scrollDownButton = new ModernButton("▼");
         scrollUpBounds = new Rectangle(0, 0, 30, 30);
@@ -72,21 +70,17 @@ public class RulesState extends GameState {
 
     @Override
     public void tick() {
-        // No continuous updates needed for rules
     }
 
     @Override
     public void render(Graphics g) {
-        // Get current window dimensions
         int windowWidth = getGame().getWidth();
         int windowHeight = getGame().getHeight();
         
-        // Update button positions based on window size
         backBounds.setBounds(50, windowHeight - 100, backBounds.width, backBounds.height);
         scrollUpBounds.setBounds(windowWidth - 60, 20, 30, 30);
         scrollDownBounds.setBounds(windowWidth - 60, windowHeight - 80, 30, 30);
         
-        // Draw background with gradient
         Graphics2D g2d = (Graphics2D) g;
         GradientPaint gradient = new GradientPaint(
             0, 0, new Color(40, 44, 52),
@@ -95,57 +89,46 @@ public class RulesState extends GameState {
         g2d.setPaint(gradient);
         g2d.fillRect(0, 0, windowWidth, windowHeight);
 
-        // Create clipping region for scrolling
         Shape oldClip = g2d.getClip();
         int contentWidth = windowWidth - 60;
         int contentHeight = windowHeight - 40;
         g2d.setClip(30, 20, contentWidth, contentHeight);
 
-        // Draw semi-transparent overlay for better readability
         g2d.setColor(new Color(0, 0, 0, 128));
         g2d.fillRect(30, 20, contentWidth, contentHeight);
         g2d.setColor(new Color(255, 255, 255, 30));
         g2d.drawRect(30, 20, contentWidth, contentHeight);
 
-        // Enable antialiasing for smoother text
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        // Draw title with shadow (fixed position, outside scroll area)
         g2d.setClip(oldClip);
         g.setFont(new Font("Arial", Font.BOLD, 36));
         String title = rules[0];
         FontMetrics fm = g.getFontMetrics();
         int titleX = (windowWidth - fm.stringWidth(title)) / 2;
         
-        // Draw shadow
         g.setColor(new Color(0, 0, 0, 128));
         g.drawString(title, titleX + 2, 62);
         
-        // Draw title
         g.setColor(Color.WHITE);
         g.drawString(title, titleX, 60);
 
-        // Restore clip for scrolling content
         g2d.setClip(30, 20, contentWidth, contentHeight);
 
-        // Draw rules text with different colors for special cards
         g.setFont(new Font("Arial", Font.PLAIN, 16));
-        int y = 100 - scrollOffset; // Apply scroll offset
+        int y = 100 - scrollOffset; 
         int leftMargin = 50;
         
         for (int i = 1; i < rules.length; i++) {
             String line = rules[i];
             
-            // Add extra spacing before each section
             if (line.startsWith("1.") || line.startsWith("2.") || 
                 line.startsWith("3.") || line.startsWith("4.") || 
                 line.startsWith("5.")) {
                 y += 10;
             }
             
-            // Only draw if within visible area
             if (y >= 20 && y <= windowHeight - 20) {
-                // Color special card rules and add visual emphasis
                 if (line.contains("RED")) {
                     g.setColor(new Color(220, 53, 69));
                     g2d.setFont(g.getFont().deriveFont(Font.BOLD));
@@ -163,12 +146,10 @@ public class RulesState extends GameState {
                     g2d.setFont(g.getFont().deriveFont(Font.PLAIN));
                 }
                 
-                // Draw text shadow for better readability
                 if (!line.trim().isEmpty()) {
                     g.setColor(new Color(0, 0, 0, 100));
                     g.drawString(line, leftMargin + 1, y + 1);
                     
-                    // Restore color and draw main text
                     if (line.contains("RED")) {
                         g.setColor(new Color(220, 53, 69));
                     } else if (line.contains("BLUE")) {
@@ -184,19 +165,16 @@ public class RulesState extends GameState {
                 
                 g.drawString(line, leftMargin, y);
             }
-            y += line.isEmpty() ? 10 : 22; // Add more space between sections
+            y += line.isEmpty() ? 10 : 22; 
         }
 
-        // Restore original clip
         g2d.setClip(oldClip);
 
-        // Draw scroll buttons only if they exist
         if (scrollUpButton != null && scrollDownButton != null) {
             scrollUpButton.render(g, scrollUpBounds.x, scrollUpBounds.y, scrollUpBounds.width, scrollUpBounds.height);
             scrollDownButton.render(g, scrollDownBounds.x, scrollDownBounds.y, scrollDownBounds.width, scrollDownBounds.height);
         }
 
-        // Draw back button with shadow effect if it exists
         if (backButton != null) {
             backButton.render(g, backBounds.x, backBounds.y, backBounds.width, backBounds.height);
         }
@@ -232,14 +210,12 @@ public class RulesState extends GameState {
             if (scrollDownButton != null) scrollDownButton.setPressed(false);
             
             if (backBounds.contains(mouse)) {
-                // Create the new state before cleaning up the current one
                 MenuState nextState = new MenuState(getGame());
                 getGame().setState(nextState);
             }
             return;
         }
 
-        // Handle mouse wheel scrolling
         if (e.getID() == MouseEvent.MOUSE_WHEEL && scrollUpButton != null && scrollDownButton != null) {
             MouseWheelEvent wheelEvent = (MouseWheelEvent) e;
             scrollOffset += wheelEvent.getWheelRotation() * SCROLL_SPEED;
@@ -249,7 +225,6 @@ public class RulesState extends GameState {
 
     @Override
     public void onEnter() {
-        // Initialize components if they're null
         if (backButton == null) {
             initializeComponents();
         }
@@ -257,7 +232,6 @@ public class RulesState extends GameState {
 
     @Override
     public void onExit() {
-        // Clean up resources after the last render
         getGame().runLater(() -> {
             backButton = null;
             scrollUpButton = null;

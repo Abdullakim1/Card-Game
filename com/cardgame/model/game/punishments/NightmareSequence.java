@@ -7,9 +7,7 @@ import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.util.Random;
 
-/**
- * Nightmare Sequence punishment animation
- */
+
 public class NightmareSequence implements PunishmentAnimation {
     private static final int WIDTH = 300;
     private static final int HEIGHT = 200;
@@ -55,7 +53,7 @@ public class NightmareSequence implements PunishmentAnimation {
         
         // Draw bed
         g2d.setColor(new Color(60, 40, 20));
-        g2d.fillRect(30, HEIGHT - 60, 150, 20); // bed frame
+        g2d.fillRect(30, HEIGHT - 60, 150, 20); 
         
         g2d.setColor(new Color(200, 200, 220));
         g2d.fillRect(30, HEIGHT - 70, 150, 10); // mattress
@@ -179,9 +177,7 @@ public class NightmareSequence implements PunishmentAnimation {
         return image;
     }
     
-    /**
-     * Helper method to draw spiders nightmare
-     */
+    
     private void drawSpiders(Graphics2D g2d, int centerX, int centerY, int frame) {
         // Draw multiple spiders
         for (int i = 0; i < 5; i++) {
@@ -221,9 +217,7 @@ public class NightmareSequence implements PunishmentAnimation {
         }
     }
     
-    /**
-     * Helper method to draw falling nightmare
-     */
+    
     private void drawFalling(Graphics2D g2d, int centerX, int centerY, int frame) {
         // Draw a person falling
         int fallY = (frame % 30) * 2;
@@ -264,9 +258,7 @@ public class NightmareSequence implements PunishmentAnimation {
         g2d.fillRect(centerX - 40, centerY + 30, 80, 10);
     }
     
-    /**
-     * Helper method to draw being chased nightmare
-     */
+    
     private void drawChased(Graphics2D g2d, int centerX, int centerY, int frame) {
         // Draw running person
         int runX = centerX - 10;
@@ -326,9 +318,7 @@ public class NightmareSequence implements PunishmentAnimation {
         }
     }
     
-    /**
-     * Helper method to draw teeth falling out nightmare
-     */
+    
     private void drawTeethFalling(Graphics2D g2d, int centerX, int centerY, int frame) {
         // Draw face outline
         g2d.setColor(new Color(255, 200, 150));
@@ -373,9 +363,7 @@ public class NightmareSequence implements PunishmentAnimation {
         }
     }
     
-    /**
-     * Helper method to draw public speaking nightmare
-     */
+    
     private void drawPublicSpeaking(Graphics2D g2d, int centerX, int centerY, int frame) {
         // Draw podium
         g2d.setColor(new Color(100, 50, 0));

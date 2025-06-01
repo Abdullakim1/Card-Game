@@ -16,7 +16,7 @@ public class MenuState extends GameState {
     private Rectangle exitBounds;
 
     public MenuState(Game game) {
-        super(game);
+        super(game);  //needs to be clarified
         initializeButtons();
     }
 

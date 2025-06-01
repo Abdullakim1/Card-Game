@@ -6,9 +6,7 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 
-/**
- * Academic Failure punishment animation
- */
+
 public class AcademicFailure implements PunishmentAnimation {
     private static final int WIDTH = 300;
     private static final int HEIGHT = 200;
@@ -235,9 +233,7 @@ public class AcademicFailure implements PunishmentAnimation {
         return image;
     }
     
-    /**
-     * Helper method to draw a laughing student
-     */
+    
     private void drawLaughingStudent(Graphics2D g2d, int x, int y, int frame) {
         // Animate laughing
         int laughShake = (int) (Math.sin(frame * 0.3) * 2);

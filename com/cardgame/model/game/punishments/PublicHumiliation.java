@@ -6,9 +6,7 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 
-/**
- * Public Humiliation punishment animation
- */
+
 public class PublicHumiliation implements PunishmentAnimation {
     private static final int WIDTH = 300;
     private static final int HEIGHT = 200;
@@ -161,7 +159,6 @@ public class PublicHumiliation implements PunishmentAnimation {
             }
         }
 
-        // Draw speech bubbles with embarrassing statements
         String[] embarrassingStatements = {
                 "I still sleep with a nightlight!",
                 "I failed kindergarten twice!",

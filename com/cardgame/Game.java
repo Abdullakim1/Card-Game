@@ -43,7 +43,7 @@ public class Game extends JFrame implements Runnable, KeyListener {
 
         addMouseListener(new MouseListener() {
             @Override
-            public void mouseClicked(MouseEvent e) {
+            public void mouseClicked(MouseEvent e) {  // Have no clue why all the methods are the same
                 if (currentState != null) {
                     currentState.handleMouseEvent(e);
                 }
@@ -86,12 +86,10 @@ public class Game extends JFrame implements Runnable, KeyListener {
             }
         });
         
-        // Add keyboard listener
         addKeyListener(this);
         setFocusable(true);
         requestFocus();
 
-        // Start with menu state
         setState(new MenuState(this));
     }
 
@@ -99,14 +97,11 @@ public class Game extends JFrame implements Runnable, KeyListener {
         if (running) return;
         running = true;
         
-        // Make the window visible first
         setVisible(true);
         
-        // Create buffer strategy after window is visible
         createBufferStrategy(3);
         bs = getBufferStrategy();
         
-        // Start game thread
         gameThread = new Thread(this);
         gameThread.start();
     }
@@ -171,19 +166,15 @@ public class Game extends JFrame implements Runnable, KeyListener {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        // Clear screen
         g2d.setColor(Color.BLACK);
         g2d.fillRect(0, 0, getWidth(), getHeight());
 
-        // Render current state
         if (currentState != null) {
             currentState.render(g2d);
         }
 
-        // Render card animations
         cardAnimation.render(g2d);
 
-        // Clean up
         g2d.dispose();
         bs.show();
     }
@@ -207,10 +198,8 @@ public class Game extends JFrame implements Runnable, KeyListener {
         SwingUtilities.invokeLater(action);
     }
 
-    // KeyListener methods
     @Override
     public void keyTyped(KeyEvent e) {
-        // Pass key events to the current state if it can handle them
         if (currentState instanceof SinglePlayerNameState) {
             ((SinglePlayerNameState) currentState).processKeyEvent(e);
         } else if (currentState instanceof PlayerSelectionState) {
@@ -220,12 +209,10 @@ public class Game extends JFrame implements Runnable, KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        // Not used for text input, but could be used for other controls
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-        // Not used for text input, but could be used for other controls
     }
     
     public static void main(String[] args) {
