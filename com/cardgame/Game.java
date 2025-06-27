@@ -1,5 +1,8 @@
 package com.cardgame;
 
+import com.cardgame.controller.GameKeyListener;
+import com.cardgame.controller.GameMouseListener;
+import com.cardgame.controller.GameMouseMotionListener;
 import com.cardgame.controller.states.GameState;
 import com.cardgame.controller.states.MenuState;
 import com.cardgame.view.animations.CardAnimation;
@@ -11,14 +14,9 @@ import javax.swing.SwingUtilities;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferStrategy;
-import java.util.ArrayList;
-import java.util.List;
 
-public class Game extends JFrame implements Runnable, KeyListener {
+public class Game extends JFrame implements Runnable {
     private static final int WIDTH = 800;
     private static final int HEIGHT = 600;
     private static final String TITLE = "Card Game";
@@ -41,52 +39,10 @@ public class Game extends JFrame implements Runnable, KeyListener {
 
         cardAnimation = new CardAnimation();
 
-        addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {  // Have no clue why all the methods are the same
-                if (currentState != null) {
-                    currentState.handleMouseEvent(e);
-                }
-            }
+        addMouseListener(new GameMouseListener(this));
+        addMouseMotionListener(new GameMouseMotionListener(this));
+        addKeyListener(new GameKeyListener(this));
 
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (currentState != null) {
-                    currentState.handleMouseEvent(e);
-                }
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (currentState != null) {
-                    currentState.handleMouseEvent(e);
-                }
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {}
-
-            @Override
-            public void mouseExited(MouseEvent e) {}
-        });
-
-        addMouseMotionListener(new MouseMotionListener() {
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                if (currentState != null) {
-                    currentState.handleMouseEvent(e);
-                }
-            }
-
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                if (currentState != null) {
-                    currentState.handleMouseEvent(e);
-                }
-            }
-        });
-        
-        addKeyListener(this);
         setFocusable(true);
         requestFocus();
 
@@ -96,12 +52,12 @@ public class Game extends JFrame implements Runnable, KeyListener {
     public synchronized void start() {
         if (running) return;
         running = true;
-        
+
         setVisible(true);
-        
+
         createBufferStrategy(3);
         bs = getBufferStrategy();
-        
+
         gameThread = new Thread(this);
         gameThread.start();
     }
@@ -189,6 +145,9 @@ public class Game extends JFrame implements Runnable, KeyListener {
         }
     }
 
+    public GameState getCurrentState() {
+        return currentState;
+    }
 
     public CardAnimation getCardAnimation() {
         return cardAnimation;
@@ -198,23 +157,6 @@ public class Game extends JFrame implements Runnable, KeyListener {
         SwingUtilities.invokeLater(action);
     }
 
-    @Override
-    public void keyTyped(KeyEvent e) {
-        if (currentState instanceof SinglePlayerNameState) {
-            ((SinglePlayerNameState) currentState).processKeyEvent(e);
-        } else if (currentState instanceof PlayerSelectionState) {
-            ((PlayerSelectionState) currentState).processKeyEvent(e);
-        }
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-    }
-    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             Game game = new Game();

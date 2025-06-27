@@ -21,7 +21,7 @@ public class SinglePlayerNameState extends GameState {
     private boolean isInputActive = false;
     
     public SinglePlayerNameState(Game game) {
-        super(game); //I believe inherits all the instances of GameState
+        super(game); 
         initializeButtons();
     }
     

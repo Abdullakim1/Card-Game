@@ -14,7 +14,7 @@ public class StateManager {
     private GameState currentState;
     
     public StateManager(Game game) {
-        this.game = game;   //needs to be clarified
+        this.game = game;   
         this.stateFactories = new HashMap<>();
         
         registerStateFactory("menu", new MenuStateFactory());
